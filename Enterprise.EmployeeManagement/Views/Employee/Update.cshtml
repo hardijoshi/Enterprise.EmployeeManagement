@@ -1,0 +1,80 @@
+﻿@model Enterprise.EmployeeManagement.DAL.Models.Employee
+@{
+    ViewData["Title"] = "Update";
+}
+<a asp-action="Index">View All Employees</a>
+<h2>Update</h2>
+<form id="updateForm" method="post">
+    <input asp-for="Id" type="hidden" />
+    <p>
+        <label asp-for="FirstName">First Name:</label>
+        <input asp-for="FirstName" />
+        <span asp-validation-for="FirstName"></span>
+    </p>
+    <p>
+        <label asp-for="LastName">Last Name:</label>
+        <input asp-for="LastName" />
+        <span asp-validation-for="LastName"></span>
+    </p>
+    <p>
+        <label asp-for="Role">Role:</label>
+        <select asp-for="Role">
+            <option value="Software Engineer">Software Engineer</option>
+            <option value="HR">HR</option>
+            <option value="Data Analyst">Data Analyst</option>
+        </select>
+        <span asp-validation-for="Role"></span>
+    </p>
+    <p>
+        <label asp-for="MobileNumber">Mobile Number:</label>
+        <input asp-for="MobileNumber" />
+        <span asp-validation-for="MobileNumber"></span>
+    </p>
+    <p>
+        <label asp-for="Email">Email:</label>
+        <input asp-for="Email" type="email" />
+        <span asp-validation-for="Email"></span>
+    </p>
+    <p>
+        <label asp-for="Password">Password:</label>
+        <input asp-for="Password" type="password" />
+        <span asp-validation-for="Password"></span>
+    </p>
+    <p><button type="submit">Submit</button></p>
+</form>
+
+<div id="responseMessage"></div>
+
+<script>
+    document.getElementById('updateForm').addEventListener('submit', function (e) {
+        e.preventDefault(); // Prevent the default form submission
+
+        const formData = new FormData(this); // Collect form data
+        const jsonData = Object.fromEntries(formData.entries()); // Convert to JSON
+        jsonData.Id = parseInt(jsonData.Id, 10); // Ensure the ID is passed as an integer
+
+        fetch('/Employee/Update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(jsonData), // Correctly stringify the data
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(errorText => {
+                    throw new Error(errorText);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('responseMessage').innerHTML =
+                `<p style="color: green;">${data.message}</p>`;
+        })
+        .catch(error => {
+            document.getElementById('responseMessage').innerHTML =
+                `<p style="color: red;">Error: ${error.message}</p>`;
+        });
+    });
+</script>

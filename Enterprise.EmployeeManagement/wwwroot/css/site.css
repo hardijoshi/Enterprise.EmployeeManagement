@@ -1,0 +1,124 @@
+﻿/* Form Styling with Grid Layout */
+form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+    form p {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+        form p label {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        form p input[type="text"],
+        form p input[type="number"],
+        form p select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        /* Ensure buttons span the full row */
+        form p.full-row {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: center; 
+            margin-top: 20px;
+        }
+            form p.full-row button {
+
+                background-color: #006bff; 
+                color: #FFF;
+                border: none;
+                border-radius: 50px;
+            }
+
+
+        form p span {
+            width: 100%;
+            color: Red;
+            font-size: 14px;
+        }
+
+table {
+    width: 100%;
+    border-collapse: collapse; /* Remove gaps between table borders */
+    margin-top: 20px;
+    font-size: 14px; /* Standard font size */
+}
+
+    table thead {
+        background: #006bff; /* Header background color */
+        color: #FFF; /* Text color for header */
+        font-weight: bold;
+        font-size: 16px;
+        text-align: left;
+    }
+
+    table th,
+    table td {
+        padding: 12px 15px; /* Padding inside cells */
+        border: 1px solid #ddd; /* Subtle border around cells */
+    }
+
+    table tbody tr:nth-child(even) {
+        background-color: #f9f9f9; /* Light gray background for even rows */
+    }
+
+    table tbody tr:hover {
+        background-color: #f1f1f1; /* Slight highlight on hover */
+        transition: background-color 0.3s ease; /* Smooth transition for hover */
+    }
+
+    table td a {
+        color: #006bff; /* Link color */
+        text-decoration: none;
+        font-size: 14px;
+        margin-right: 10px; /* Spacing between action links */
+        transition: color 0.3s ease; /* Smooth transition for hover effect */
+    }
+
+        table td a:hover {
+            color: #004bba; /* Darker blue on hover */
+        }
+
+    table td button {
+        background-color: #dc3545; /* Red for delete button */
+        color: #FFF;
+        border: none;
+        padding: 8px 12px;
+        font-size: 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+        table td button:hover {
+            background-color: #c82333; /* Darker red for hover */
+            transform: scale(1.05); /* Slight zoom effect */
+        }
+
+/* Media Query for Responsive Table */
+@media screen and (max-width: 768px) {
+    table {
+        font-size: 12px; /* Reduce font size for smaller screens */
+    }
+
+        table th,
+        table td {
+            padding: 8px;
+        }
+
+        table thead {
+            font-size: 14px; /* Adjust header font size */
+        }
+}

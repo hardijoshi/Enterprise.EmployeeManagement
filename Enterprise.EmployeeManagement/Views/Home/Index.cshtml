@@ -1,0 +1,70 @@
+﻿@using Enterprise.EmployeeManagement.DAL.Models
+@{
+    ViewData["Title"] = "Employee List";
+}
+
+<a asp-action="Create">Create an Employee</a>
+
+<h2>Employee List</h2>
+
+<!-- Anti-forgery token to be used in JavaScript -->
+<div id="antiForgeryToken" style="display: none;">
+    @Html.AntiForgeryToken()
+</div>
+
+<table id="employeeTable" style="width: 50%">
+    <thead>
+        <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Role</th>
+            <th>Email</th>
+            <th>Mobile Number</th>
+            <th>Update</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Data will be dynamically inserted here -->
+    </tbody>
+</table>
+
+<script>
+    // Use fetch API to get employees data from the API endpoint
+    fetch('/api/employees')
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.querySelector('#employeeTable tbody');
+            const antiForgeryToken = document.querySelector('#antiForgeryToken').innerHTML; // Extract anti-forgery token
+
+            if (data.length > 0) {
+                data.forEach(employee => {
+                    const row = document.createElement('tr');
+
+                    row.innerHTML = `
+                        <td>${employee.firstName}</td>
+                        <td>${employee.lastName}</td>
+                        <td>${employee.role}</td>
+                        <td>${employee.email}</td>
+                        <td>${employee.mobileNumber}</td>
+                        <td><a href="/Employee/Update/${employee.id}">Update</a></td>
+                        <td>
+                            <form action="/Employee/Delete" method="post"
+                                  onsubmit="return confirm('Are you sure you want to delete this employee?');">
+                                ${antiForgeryToken}
+                                <input type="hidden" name="id" value="${employee.id}" />
+                                <button type="submit">Delete</button>
+                            </form>
+                        </td>
+                    `;
+
+                    tableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="7">No employees found.</td>`;
+                tableBody.appendChild(row);
+            }
+        })
+        .catch(error => console.error('Error fetching employee data:', error));
+</script>
