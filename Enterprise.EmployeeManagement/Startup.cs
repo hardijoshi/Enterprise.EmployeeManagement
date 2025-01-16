@@ -14,6 +14,7 @@ using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using Enterprise.EmployeeManagement.DAL.Context;
 using Pomelo.EntityFrameworkCore.MySql.Storage;
 using Enterprise.EmployeeManagement.DAL.Repositories;
+using Microsoft.AspNetCore.Authentication.Cookies;
 //using Microsoft.EntityFrameworkCore;
 
 namespace Enterprise.EmployeeManagement.Web
@@ -31,11 +32,25 @@ namespace Enterprise.EmployeeManagement.Web
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            services.AddDistributedMemoryCache();
+            services.AddSession(options =>
+            {
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/Account/Login";
+                    options.LogoutPath = "/Account/Logout";
+                    options.AccessDeniedPath = "/Account/AccessDenied";
+                    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+            });
             services.AddControllersWithViews();
             services.AddDbContext<AppDbContext>(options =>
                 options.UseMySql(
                     Configuration.GetConnectionString("DefaultConnection")));
-            services.AddSession();
+            
 
         }
 
@@ -56,9 +71,14 @@ namespace Enterprise.EmployeeManagement.Web
             app.UseStaticFiles();
 
             app.UseRouting();
+
+           
             app.UseSession();
 
+            app.UseAuthentication();
             app.UseAuthorization();
+
+
 
             app.UseEndpoints(endpoints =>
             {

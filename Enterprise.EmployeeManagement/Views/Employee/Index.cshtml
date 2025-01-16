@@ -3,7 +3,11 @@
     ViewData["Title"] = "Employee List";
 }
 
-<a href="javascript:void(0);" onclick="openCreateModal();">Create an Employee</a>
+<a href="javascript:void(0);" onclick="openCreateModal();" class="btn btn-primary">Create an Employee</a>
+<!-- Logout Button -->
+<a href="javascript:void(0);" onclick="logout()" class="btn btn-danger">Logout</a>
+
+
 
 
 
@@ -251,10 +255,12 @@
                     // Show success message
                     $('#responseMessage').html('<p style="color: green;">' + response.message + '</p>');
                     // Close modal after a successful update and reload DataTable
-                    setTimeout(function() {
-                        new bootstrap.Modal(document.getElementById('updateModal')).hide();
-                        $('#employeeTable').DataTable().ajax.reload(); // Reload table data
-                    }, 2000);
+                        setTimeout(function() {
+                            const updateModalElement = document.getElementById('updateModal');
+                            const updateModal = bootstrap.Modal.getInstance(updateModalElement) || new bootstrap.Modal(updateModalElement);
+                            updateModal.hide(); // Close the modal
+                            $('#employeeTable').DataTable().ajax.reload();
+                        }, 2000);
                 },
                 error: function(error) {
                     $('#responseMessage').html('<p style="color: red;">Error: ' + error.responseText + '</p>');
@@ -285,10 +291,11 @@
                 success: function(response) {
                     // Show success message
                     $('#createResponseMessage').html('<p style="color: green;">' + response.message + '</p>');
-                    // Close modal after successful creation and reload the DataTable
                     setTimeout(function() {
-                        new bootstrap.Modal(document.getElementById('createModal')).hide();
-                        $('#employeeTable').DataTable().ajax.reload(); // Reload table data
+                        const updateModalElement = document.getElementById('createModal');
+                            const updateModal = bootstrap.Modal.getInstance(updateModalElement) || new bootstrap.Modal(updateModalElement);
+                            updateModal.hide(); // Close the modal
+                            $('#employeeTable').DataTable().ajax.reload();
                     }, 2000);
                 },
                 error: function(error) {
@@ -296,6 +303,21 @@
                 }
             });
         });
+
+        function logout() {
+            $.ajax({
+                url: '/Account/Logout', // Assuming this is the logout action
+                type: 'POST',
+                success: function(response) {
+                    // Redirect to the login page after successful logout
+                    window.location.href = '/Account/Login'; // Adjust according to your login page URL
+                },
+                error: function(error) {
+                    alert('Error logging out');
+                }
+            });
+        }
+
     </script>
 }
 

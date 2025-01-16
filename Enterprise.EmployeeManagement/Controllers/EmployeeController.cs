@@ -8,10 +8,11 @@ using Microsoft.Extensions.Logging;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Enterprise.EmployeeManagement.core.Utilities;
-
+using Microsoft.AspNetCore.Authorization;
 
 namespace Enterprise.EmployeeManagement.Web.Controllers
 {
+    [Authorize]
     public class EmployeeController : Controller
     {
         private readonly IEmployeeRepository _employeeRepository;
