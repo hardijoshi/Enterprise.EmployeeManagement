@@ -6,16 +6,19 @@ using System.Threading.Tasks;
 using Enterprise.EmployeeManagement.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Enterprise.EmployeeManagement.DAL.Repositories;
 
 namespace Enterprise.EmployeeManagement.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly IEmployeeRepository _employeeRepository;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, IEmployeeRepository employeeRepository)
         {
             _logger = logger;
+            _employeeRepository = employeeRepository;
         }
 
         public IActionResult Index()

@@ -15,8 +15,9 @@
     @Html.AntiForgeryToken()
 </div>
 
-<table id="employeeTable" style="width: 50%">
-    <thead>
+<!-- Add table class for styling -->
+<table id="employeeTable" class="table table-striped table-hover" style="width: 80%; margin: auto; margin-top: 20px; border-collapse: collapse;">
+    <thead class="table-dark">
         <tr>
             <th>First Name</th>
             <th>Last Name</th>
@@ -31,6 +32,7 @@
         <!-- Data will be dynamically inserted here -->
     </tbody>
 </table>
+
 
 <!-- Bootstrap Modal for Create -->
 <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
@@ -131,9 +133,7 @@
                         <input id="password" name="Password" type="password" />
                         <span id="passwordValidation"></span>
                     </p>
-                    <p>
-                        <button id="updateButton" type="button" class="btn btn-primary">Update</button>
-                    </p>
+                    <p><button type="submit" class="btn btn-primary">Submit</button></p>
                 </form>
                 <div id="responseMessage"></div>
             </div>
@@ -182,18 +182,9 @@
 
     // Open the update modal and populate it with employee data
     function openUpdateModal(employeeId) {
-        console.log(`Fetching details for employee ID: ${employeeId}`);
         fetch(`/Employee/GetDetails/${employeeId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Error fetching employee details: ${response.statusText}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                console.log('Employee data fetched:', data);
-
-                // Populate the modal fields with the fetched data
                 document.getElementById('employeeId').value = data.id;
                 document.getElementById('firstName').value = data.firstName;
                 document.getElementById('lastName').value = data.lastName;
@@ -201,14 +192,47 @@
                 document.getElementById('mobileNumber').value = data.mobileNumber;
                 document.getElementById('email').value = data.email;
 
-                // Show the modal
                 new bootstrap.Modal(document.getElementById('updateModal')).show();
             })
             .catch(error => {
-                console.error('Error loading employee details:', error);
                 alert('Error loading employee details: ' + error.message);
             });
     }
+
+    // Handle the update form submission
+        document.getElementById('updateForm').addEventListener('submit', function (e) {
+        e.preventDefault(); // Prevent the default form submission
+
+        const formData = new FormData(this); // Collect form data
+        const jsonData = Object.fromEntries(formData.entries()); // Convert to JSON
+
+        // Ensure `Id` is passed as an integer
+        jsonData.Id = parseInt(document.getElementById('employeeId').value, 10);
+
+        fetch('/Employee/Update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(jsonData), // Correctly stringify the data
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(errorText => {
+                    throw new Error(errorText);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('responseMessage').innerHTML =
+                `<p style="color: green;">${data.message}</p>`;
+        })
+        .catch(error => {
+            document.getElementById('responseMessage').innerHTML =
+                `<p style="color: red;">Error: ${error.message}</p>`;
+        });
+    });
 
 
 
@@ -255,45 +279,20 @@
                 `<p style="color: red;">Error: ${error.message}</p>`;
         });
     });
+   
 
+</script>
 
-        // Handle the update form submission
-    document.getElementById('updateButton').addEventListener('click', () => {
-        const jsonData = {
-            id: document.getElementById('employeeId').value,
-            firstName: document.getElementById('firstName').value,
-            lastName: document.getElementById('lastName').value,
-            role: document.getElementById('role').value,
-            email: document.getElementById('email').value,
-            mobileNumber: document.getElementById('mobileNumber').value,
-            password: document.getElementById('password').value,
-        };
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 
-        console.log('Sending JSON:', jsonData); // Debugging output
-
-        fetch('/Employee/Update', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': antiForgeryToken, // Replace this with your token variable
-            },
-            body: JSON.stringify(jsonData),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                document.getElementById('responseMessage').innerHTML =
-                    `<p style="color: green;">${data.message}</p>`;
-                setTimeout(() => location.reload(), 2000); // Reload the page to reflect updates
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('responseMessage').innerHTML =
-                `<p style="color: red;">Error: ${error.message}</p>`;
-        });
+<script>
+    $('#employeeTable').DataTable({
+        dom: 'Bfrtip', // Define table control elements
+        buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
     });
-
-
 </script>
 

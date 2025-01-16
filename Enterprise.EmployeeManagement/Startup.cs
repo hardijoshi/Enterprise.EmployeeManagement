@@ -34,8 +34,8 @@ namespace Enterprise.EmployeeManagement.Web
             services.AddControllersWithViews();
             services.AddDbContext<AppDbContext>(options =>
                 options.UseMySql(
-                    Configuration.GetConnectionString("DefaultConnection")
-    ));
+                    Configuration.GetConnectionString("DefaultConnection")));
+            services.AddSession();
 
         }
 
@@ -56,6 +56,7 @@ namespace Enterprise.EmployeeManagement.Web
             app.UseStaticFiles();
 
             app.UseRouting();
+            app.UseSession();
 
             app.UseAuthorization();
 
@@ -63,7 +64,7 @@ namespace Enterprise.EmployeeManagement.Web
             {
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
+                    pattern: "{controller=Account}/{action=Login}/{id?}");
             });
 
         }

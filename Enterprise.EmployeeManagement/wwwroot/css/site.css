@@ -1,97 +1,127 @@
-﻿/* Form Styling with Grid Layout */
-form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+﻿/* Center the entire container */
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #f5f5f5; /* Light background */
+    padding: 20px;
 }
 
-    form p {
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-    }
+/* Form Title */
+.form-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+}
 
-        form p label {
-            font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-
-        form p input[type="text"],
-        form p input[type="number"],
-        form p select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        /* Ensure buttons span the full row */
-        form p.full-row {
-            grid-column: 1 / -1;
-            display: flex;
-            justify-content: center; 
-            margin-top: 20px;
-        }
-            form p.full-row button {
-
-                background-color: #006bff; 
-                color: #FFF;
-                border: none;
-                border-radius: 50px;
-            }
-
-
-        form p span {
-            width: 100%;
-            color: Red;
-            font-size: 14px;
-        }
-
-table {
+/* Centered Form Styling */
+.login-form {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     width: 100%;
-    border-collapse: collapse; /* Remove gaps between table borders */
-    margin-top: 20px;
-    font-size: 14px; /* Standard font size */
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Adjust spacing between inputs */
+    align-items: center; /* Center all elements inside the form */
 }
 
-    table thead {
-        background: #006bff; /* Header background color */
-        color: #FFF; /* Text color for header */
-        font-weight: bold;
-        font-size: 16px;
+/* Input Fields */
+.login-form input[type="text"],
+.login-form input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Button Centering */
+.button-container {
+    display: flex;
+    justify-content: center; /* Center the button */
+    width: 100%; /* Ensure it aligns with the form width */
+}
+
+/* Button Styling */
+.login-form button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.login-form button:hover {
+    background-color: #0056b3;
+}
+
+/* Validation Error Messages */
+.login-form span {
+    font-size: 12px;
+    color: red;
+}
+
+/* Validation Summary */
+.validation-summary {
+    margin-top: 10px;
+    color: red;
+    text-align: center;
+    font-size: 14px;
+}
+/* General Table Styling */
+/* Employee Table */
+#employeeTable {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    border: 1px solid #ddd;
+}
+
+    #employeeTable th,
+    #employeeTable td {
+        padding: 12px 15px;
         text-align: left;
     }
 
-    table th,
-    table td {
-        padding: 12px 15px; /* Padding inside cells */
-        border: 1px solid #ddd; /* Subtle border around cells */
+    #employeeTable th {
+        background-color: #343a40;
+        color: #fff;
+        text-transform: uppercase;
+        border-bottom: 2px solid #ddd;
     }
 
-    table tbody tr:nth-child(even) {
-        background-color: #f9f9f9; /* Light gray background for even rows */
+    #employeeTable tbody tr {
+        border-bottom: 1px solid #ddd;
     }
 
-    table tbody tr:hover {
-        background-color: #f1f1f1; /* Slight highlight on hover */
-        transition: background-color 0.3s ease; /* Smooth transition for hover */
-    }
-
-    table td a {
-        color: #006bff; /* Link color */
-        text-decoration: none;
-        font-size: 14px;
-        margin-right: 10px; /* Spacing between action links */
-        transition: color 0.3s ease; /* Smooth transition for hover effect */
-    }
-
-        table td a:hover {
-            color: #004bba; /* Darker blue on hover */
+        #employeeTable tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
 
-    table td button {
+        #employeeTable tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+    #employeeTable td a {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
+        #employeeTable td a:hover {
+            text-decoration: underline;
+        }
+
+    #employeeTable form button {
         background-color: #dc3545; /* Red for delete button */
         color: #FFF;
         border: none;
@@ -102,23 +132,17 @@ table {
         transition: background-color 0.3s ease, transform 0.2s ease;
     }
 
-        table td button:hover {
+        #employeeTable form button:hover {
             background-color: #c82333; /* Darker red for hover */
             transform: scale(1.05); /* Slight zoom effect */
         }
 
-/* Media Query for Responsive Table */
-@media screen and (max-width: 768px) {
-    table {
-        font-size: 12px; /* Reduce font size for smaller screens */
-    }
-
-        table th,
-        table td {
-            padding: 8px;
-        }
-
-        table thead {
-            font-size: 14px; /* Adjust header font size */
-        }
+/* Centering the table */
+#employeeTable {
+    margin: 20px auto;
+    width: 90%;
+    border-spacing: 0;
+    border-collapse: separate;
 }
+
+

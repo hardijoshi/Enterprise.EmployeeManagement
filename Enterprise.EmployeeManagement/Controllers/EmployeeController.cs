@@ -5,6 +5,10 @@ using Enterprise.EmployeeManagement.DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System;
 using Microsoft.Extensions.Logging;
+using System.Linq;
+using Microsoft.AspNetCore.Http;
+using Enterprise.EmployeeManagement.core.Utilities;
+
 
 namespace Enterprise.EmployeeManagement.Web.Controllers
 {
@@ -19,11 +23,15 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
             _logger = logger;
         }
 
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            var employees = await _employeeRepository.GetAllEmployeesAsync();
-            return View("~/Views/Home/Index.cshtml", employees); // Pass employees to the view
+            if (HttpContext.Session.GetString("UserEmail") == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+            return View();
         }
+
 
         [HttpGet]
         [Route("api/employees")] // API endpoint to get employees data as JSON
@@ -33,21 +41,63 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
             return Ok(employees); // Returns the employees as a JSON response
         }
 
+        [HttpGet]
+        [Route("Employee/GetDetails/{id}")]
+        public async Task<IActionResult> GetDetails(int id)
+        {
+            var employee = await _employeeRepository.GetEmployeeByIdAsync(id);
+            if (employee == null)
+            {
+                return NotFound(new { message = "Employee not found" });
+            }
+
+            return Ok(employee); // Return JSON data for the employee
+        }
+
+
         public IActionResult Create()
         {
             return View();
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(Employee employee)
+        public async Task<IActionResult> Create([FromBody] Employee employee)
         {
             if (ModelState.IsValid)
             {
+                // Hash the password before saving
+                if (!string.IsNullOrEmpty(employee.Password))
+                {
+                    employee.Password = PasswordHasher.HashPassword(employee.Password);
+                }
+
                 await _employeeRepository.CreateEmployeeAsync(employee);
-                return RedirectToAction("Index");
+
+                // Return a JSON response for AJAX
+                return Json(new { success = true, message = "Employee created successfully." });
             }
-            return View(employee);
+
+            // Return validation errors for AJAX
+            return BadRequest(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage) });
         }
+
+
+
+        //[HttpPost]
+        //public async Task<IActionResult> Create([FromBody] Employee employee)
+        //{
+        //    if (ModelState.IsValid)
+        //    {
+        //        await _employeeRepository.CreateEmployeeAsync(employee);
+
+        //        // Return a JSON response for AJAX
+        //        return Json(new { success = true, message = "Employee created successfully." });
+        //    }
+
+        //    // Return validation errors for AJAX
+        //    return BadRequest(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage) });
+        //}
+
 
         //[HttpPost]
         ////[Route("employees/update/{id}")]
@@ -75,9 +125,18 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
                 return BadRequest(new { error = "Invalid data", details = ModelState });
             }
 
+            // Check if the password is provided and hash it before saving
+            if (!string.IsNullOrEmpty(employee.Password))
+            {
+                employee.Password = PasswordHasher.HashPassword(employee.Password);  // Hash the password
+            }
+
+            // Update the employee details in the database
             await _employeeRepository.UpdateEmployeeAsync(employee);
+
             return Ok(new { message = "Employee updated successfully" });
         }
+
 
 
 
@@ -93,6 +152,9 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
 
             return View("Update", employee);
         }
+
+       
+
 
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
