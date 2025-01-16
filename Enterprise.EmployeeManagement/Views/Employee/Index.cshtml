@@ -15,9 +15,8 @@
     @Html.AntiForgeryToken()
 </div>
 
-<!-- Add table class for styling -->
-<table id="employeeTable" class="table table-striped table-hover" style="width: 80%; margin: auto; margin-top: 20px; border-collapse: collapse;">
-    <thead class="table-dark">
+<table id="employeeTable" style="width: 100%">
+    <thead>
         <tr>
             <th>First Name</th>
             <th>Last Name</th>
@@ -32,7 +31,6 @@
         <!-- Data will be dynamically inserted here -->
     </tbody>
 </table>
-
 
 <!-- Bootstrap Modal for Create -->
 <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
@@ -141,158 +139,163 @@
     </div>
 </div>
 
-<script>
-    // Fetch employees and populate the table
-    fetch('/api/employees')
-        .then(response => response.json())
-        .then(data => {
-            const tableBody = document.querySelector('#employeeTable tbody');
-            const antiForgeryToken = document.querySelector('#antiForgeryToken').innerHTML;
 
-            if (data.length > 0) {
-                data.forEach(employee => {
-                    const row = document.createElement('tr');
-
-                    row.innerHTML = `
-                        <td>${employee.firstName}</td>
-                        <td>${employee.lastName}</td>
-                        <td>${employee.role}</td>
-                        <td>${employee.email}</td>
-                        <td>${employee.mobileNumber}</td>
-                        <td><a href="javascript:void(0);" onclick="openUpdateModal(${employee.id});">Update</a></td>
-                        <td>
-                            <form action="/Employee/Delete" method="post"
-                                  onsubmit="return confirm('Are you sure you want to delete this employee?');">
-                                ${antiForgeryToken}
-                                <input type="hidden" name="id" value="${employee.id}" />
-                                <button type="submit">Delete</button>
-                            </form>
-                        </td>
-                    `;
-
-                    tableBody.appendChild(row);
+@section Scripts{
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <!-- Then DataTables CSS and JS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.css">
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.js"></script>
+    <!-- Bootstrap JS should also be included for modals -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Fetch employees and populate the table
+            // Fetch employees and populate the table
+                $(function() {
+            try {
+                var table = $('#employeeTable').DataTable({
+                    ajax: {
+                        url: '/api/employees',
+                        dataSrc: function(json) {
+                            console.log('Data received:', json);
+                            return json;
+                        },
+                        error: function(xhr, error, thrown) {
+                            console.error('DataTables error:', error);
+                            console.error('Details:', thrown);
+                            console.error('Response:', xhr.responseText);
+                        }
+                    },
+                    columns: [
+                        { data: 'firstName', render: function(data) { console.log('firstName:', data); return data; } },
+                        { data: 'lastName', render: function(data) { console.log('lastName:', data); return data; } },
+                        { data: 'role', render: function(data) { console.log('role:', data); return data; } },
+                        { data: 'email', render: function(data) { console.log('email:', data); return data; } },
+                        { data: 'mobileNumber', render: function(data) { console.log('mobileNumber:', data); return data; } },
+                        {
+                            data: 'id',
+                            render: function(data) {
+                                return `<a href="javascript:void(0);" onclick="openUpdateModal(${data});">Update</a>`;
+                            }
+                        },
+                        {
+                            data: 'id',
+                            render: function(data) {
+                                return `<form action="/Employee/Delete" method="post" onsubmit="return confirm('Are you sure?');">
+                                    <input type="hidden" name="id" value="${data}" />
+                                    <button type="submit">Delete</button>
+                                </form>`;
+                            }
+                        }
+                    ],
+                    drawCallback: function(settings) {
+                        console.log('Table draw complete:', settings);
+                    }
                 });
-            } else {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td colspan="7">No employees found.</td>`;
-                tableBody.appendChild(row);
+
+                console.log('DataTable instance:', table);
+            } catch(err) {
+                console.error('Error initializing DataTable:', err);
             }
-        })
-        .catch(error => console.error('Error fetching employee data:', error));
+        });
+        // Open the update modal and populate it with employee data
+        function openCreateModal() {
+            new bootstrap.Modal(document.getElementById('createModal')).show();
+        }
 
-    // Open the update modal and populate it with employee data
-    function openUpdateModal(employeeId) {
-        fetch(`/Employee/GetDetails/${employeeId}`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('employeeId').value = data.id;
-                document.getElementById('firstName').value = data.firstName;
-                document.getElementById('lastName').value = data.lastName;
-                document.getElementById('role').value = data.role;
-                document.getElementById('mobileNumber').value = data.mobileNumber;
-                document.getElementById('email').value = data.email;
-
-                new bootstrap.Modal(document.getElementById('updateModal')).show();
-            })
-            .catch(error => {
-                alert('Error loading employee details: ' + error.message);
+        function openUpdateModal(employeeId) {
+            console.log('Opening Update Modal for Employee ID:', employeeId);
+            $.ajax({
+                url: `/Employee/GetDetails/${employeeId}`,
+                type: 'GET',
+                success: function(data) {
+                    // Populate the modal fields with employee data
+                    $('#employeeId').val(data.id);
+                    $('#firstName').val(data.firstName);
+                    $('#lastName').val(data.lastName);
+                    $('#role').val(data.role);
+                    $('#mobileNumber').val(data.mobileNumber);
+                    $('#email').val(data.email);
+                    new bootstrap.Modal(document.getElementById('updateModal')).show();
+                },
+                error: function(error) {
+                    console.error('Error fetching employee details:', error);
+                    alert('Error loading employee details');
+                }
             });
-    }
+        }
 
-    // Handle the update form submission
-        document.getElementById('updateForm').addEventListener('submit', function (e) {
-        e.preventDefault(); // Prevent the default form submission
+        // Handle the update form submission
+                $('#updateForm').submit(function(e) {
+            e.preventDefault(); // Prevent the default form submission
 
-        const formData = new FormData(this); // Collect form data
-        const jsonData = Object.fromEntries(formData.entries()); // Convert to JSON
+            // Create the formData object manually as JSON
+            const formData = {
+                Id: parseInt($('#employeeId').val(), 10), 
+                FirstName: $('#firstName').val(),
+                LastName: $('#lastName').val(),
+                Role: $('#role').val(),
+                MobileNumber: $('#mobileNumber').val(),
+                Email: $('#email').val(),
+                Password: $('#password').val()
+            };
 
-        // Ensure `Id` is passed as an integer
-        jsonData.Id = parseInt(document.getElementById('employeeId').value, 10);
-
-        fetch('/Employee/Update', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(jsonData), // Correctly stringify the data
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.text().then(errorText => {
-                    throw new Error(errorText);
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            document.getElementById('responseMessage').innerHTML =
-                `<p style="color: green;">${data.message}</p>`;
-        })
-        .catch(error => {
-            document.getElementById('responseMessage').innerHTML =
-                `<p style="color: red;">Error: ${error.message}</p>`;
+            $.ajax({
+                url: '/Employee/Update', // Your API endpoint to handle employee update
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val(),
+                    'Content-Type': 'application/json' // Ensure the content type is set to JSON
+                },
+                data: JSON.stringify(formData), // Send form data as JSON
+                success: function(response) {
+                    // Show success message
+                    $('#responseMessage').html('<p style="color: green;">' + response.message + '</p>');
+                    // Close modal after a successful update and reload DataTable
+                    setTimeout(function() {
+                        new bootstrap.Modal(document.getElementById('updateModal')).hide();
+                        $('#employeeTable').DataTable().ajax.reload(); // Reload table data
+                    }, 2000);
+                },
+                error: function(error) {
+                    $('#responseMessage').html('<p style="color: red;">Error: ' + error.responseText + '</p>');
+                }
+            });
         });
-    });
 
 
-
-        // Function to open the Create Employee modal
-    function openCreateModal() {
-        new bootstrap.Modal(document.getElementById('createModal')).show();
-    }
-
-
-    // Handle the create form submission
-    document.getElementById('createForm').addEventListener('submit', function (e) {
-        e.preventDefault(); // Prevent default form submission
-
-        const formData = new FormData(this);
-        const jsonData = Object.fromEntries(formData.entries());
-        const antiForgeryToken = document.querySelector('#antiForgeryToken input[name="__RequestVerificationToken"]').value;
-
-            fetch('/Employee/Create', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'RequestVerificationToken': antiForgeryToken, // Include CSRF token
-        },
-        body: JSON.stringify(jsonData),
-    })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(error => {
-                    throw new Error(error.errors.join(', ')); // Join validation errors
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            document.getElementById('createResponseMessage').innerHTML =
-                `<p style="color: green;">${data.message}</p>`;
-            setTimeout(() => {
-                new bootstrap.Modal(document.getElementById('createModal')).hide();
-                location.reload(); // Refresh the employee list
-            }, 2000);
-        })
-        .catch(error => {
-            document.getElementById('createResponseMessage').innerHTML =
-                `<p style="color: red;">Error: ${error.message}</p>`;
+        // Handle the create form submission
+        $('#createForm').submit(function(e) {
+            e.preventDefault(); // Prevent the default form submission
+            const formData = {
+                FirstName: $('#createFirstName').val(),
+                LastName: $('#createLastName').val(),
+                Role: $('#createRole').val(),
+                MobileNumber: $('#createMobileNumber').val(),
+                Email: $('#createEmail').val(),
+                Password: $('#createPassword').val()
+            };
+            $.ajax({
+                url: '/Employee/Create', // Your API endpoint to handle employee creation
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val(),
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify(formData), // Convert the form data to JSON // Send form data
+                success: function(response) {
+                    // Show success message
+                    $('#createResponseMessage').html('<p style="color: green;">' + response.message + '</p>');
+                    // Close modal after successful creation and reload the DataTable
+                    setTimeout(function() {
+                        new bootstrap.Modal(document.getElementById('createModal')).hide();
+                        $('#employeeTable').DataTable().ajax.reload(); // Reload table data
+                    }, 2000);
+                },
+                error: function(error) {
+                    $('#createResponseMessage').html('<p style="color: red;">Error: ' + error.responseText + '</p>');
+                }
+            });
         });
-    });
-   
-
-</script>
-
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-
-<script>
-    $('#employeeTable').DataTable({
-        dom: 'Bfrtip', // Define table control elements
-        buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
-    });
-</script>
+    </script>
+}
 
