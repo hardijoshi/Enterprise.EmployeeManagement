@@ -1,9 +1,14 @@
-﻿@using Enterprise.EmployeeManagement.DAL.Models
+﻿
+@using Enterprise.EmployeeManagement.DAL.Models
 @{
     ViewData["Title"] = "Employee List";
 }
 
-<a href="javascript:void(0);" onclick="openCreateModal();" class="btn btn-primary">Create an Employee</a>
+@if (User.IsInRole("Admin"))
+{
+    <a href="javascript:void(0);" onclick="openCreateModal();" class="btn btn-primary">Create an Employee</a>
+}
+
 <!-- Logout Button -->
 <a href="javascript:void(0);" onclick="logout()" class="btn btn-danger">Logout</a>
 
@@ -27,8 +32,12 @@
             <th>Role</th>
             <th>Email</th>
             <th>Mobile Number</th>
-            <th>Update</th>
-            <th>Delete</th>
+            @if (User.IsInRole("Admin"))
+            {
+                <th>Update</th>
+                <th>Delete</th>
+            }
+            <th>Tasks</th>
         </tr>
     </thead>
     <tbody>
@@ -59,9 +68,9 @@
                     <p>
                         <label for="createRole">Role:</label>
                         <select id="createRole" name="Role">
-                            <option value="Software Engineer">Software Engineer</option>
-                            <option value="HR">HR</option>
-                            <option value="Data Analyst">Data Analyst</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Manager">Manager</option>
+                            <option value="Employee">Employee</option>
                         </select>
                         <span id="createRoleValidation"></span>
                     </p>
@@ -114,9 +123,9 @@
                     <p>
                         <label for="role">Role:</label>
                         <select id="role" name="Role">
-                            <option value="Software Engineer">Software Engineer</option>
-                            <option value="HR">HR</option>
-                            <option value="Data Analyst">Data Analyst</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Manager">Manager</option>
+                            <option value="Employee">Employee</option>
                         </select>
                         <span id="roleValidation"></span>
                     </p>
@@ -143,38 +152,46 @@
     </div>
 </div>
 
+<!-- Bootstrap Modal for Tasks -->
+<div class="modal fade" id="tasksModal" tabindex="-1" role="dialog" aria-labelledby="tasksModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tasksModalLabel">Assigned Tasks</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Task items will be injected here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 @section Scripts{
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-    <!-- Then DataTables CSS and JS -->
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.css">
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.js"></script>
-    <!-- Bootstrap JS should also be included for modals -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         // Fetch employees and populate the table
-            // Fetch employees and populate the table
-                $(function() {
+        $(function() {
             try {
-                var table = $('#employeeTable').DataTable({
-                    ajax: {
-                        url: '/api/employees',
-                        dataSrc: function(json) {
-                            console.log('Data received:', json);
-                            return json;
-                        },
-                        error: function(xhr, error, thrown) {
-                            console.error('DataTables error:', error);
-                            console.error('Details:', thrown);
-                            console.error('Response:', xhr.responseText);
-                        }
-                    },
-                    columns: [
-                        { data: 'firstName', render: function(data) { console.log('firstName:', data); return data; } },
-                        { data: 'lastName', render: function(data) { console.log('lastName:', data); return data; } },
-                        { data: 'role', render: function(data) { console.log('role:', data); return data; } },
-                        { data: 'email', render: function(data) { console.log('email:', data); return data; } },
-                        { data: 'mobileNumber', render: function(data) { console.log('mobileNumber:', data); return data; } },
+                var columns = [
+                    { data: 'firstName', render: function(data) { console.log('firstName:', data); return data; } },
+                    { data: 'lastName', render: function(data) { console.log('lastName:', data); return data; } },
+                    { data: 'role', render: function(data) { console.log('role:', data); return data; } },
+                    { data: 'email', render: function(data) { console.log('email:', data); return data; } },
+                    { data: 'mobileNumber', render: function(data) { console.log('mobileNumber:', data); return data; } }
+                ];
+
+                // Only add update and delete columns for admin
+                if (@Json.Serialize(User.IsInRole("Admin"))) {
+                    columns.push(
                         {
                             data: 'id',
                             render: function(data) {
@@ -190,13 +207,35 @@
                                 </form>`;
                             }
                         }
-                    ],
+                    );
+                }
+
+                // Add tasks column for all users
+                columns.push({
+                    data: 'id',
+                    render: function(data) {
+                        return `<a href="javascript:void(0);" onclick="openTasksModal(${data});">View Tasks</a>`;
+                    }
+                });
+
+                var table = $('#employeeTable').DataTable({
+                    ajax: {
+                        url: '/api/employees',
+                        dataSrc: function(json) {
+                            console.log('Data received:', json);
+                            return json;
+                        },
+                        error: function(xhr, error, thrown) {
+                            console.error('DataTables error:', error);
+                            console.error('Details:', thrown);
+                            console.error('Response:', xhr.responseText);
+                        }
+                    },
+                    columns: columns,
                     drawCallback: function(settings) {
                         console.log('Table draw complete:', settings);
                     }
                 });
-
-                console.log('DataTable instance:', table);
             } catch(err) {
                 console.error('Error initializing DataTable:', err);
             }
@@ -206,8 +245,68 @@
             new bootstrap.Modal(document.getElementById('createModal')).show();
         }
 
+        const TaskStatus = {
+            NotStarted: 0,
+            Working: 1,
+            Pending: 2,
+            Completed: 3
+        };
+
+        // Function to get the status text based on the task status
+        function getStatusText(status) {
+            switch (status) {
+                case TaskStatus.NotStarted: return 'Not Started';
+                case TaskStatus.Working: return 'Working';
+                case TaskStatus.Pending: return 'Pending';
+                case TaskStatus.Completed: return 'Completed';
+                default: return 'Unknown';
+            }
+        }
+
+               // Open the modal and populate it with tasks
+        function openTasksModal(employeeId) {
+            $.ajax({
+                url: `/Employee/GetTasks/${employeeId}`,
+                type: 'GET',
+                success: function(tasks) {
+                    let taskListHtml = '';
+
+                    // Check if tasks exist
+                    if (tasks && tasks.length > 0) {
+                        tasks.forEach(task => {
+                            taskListHtml += `
+                                <div class="task-item">
+                                    <h5>${task.title}</h5>
+                                    <p><strong>Description:</strong> ${task.description}</p>
+                                    <p><strong>Status:</strong> ${getStatusText(task.status)}</p>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        taskListHtml = '<p>No tasks assigned.</p>';
+                    }
+
+                    // Append tasks to the modal body
+                    $('#tasksModal .modal-body').html(taskListHtml);
+                    new bootstrap.Modal(document.getElementById('tasksModal')).show();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching tasks:', error);
+                    console.error('Response:', xhr.responseText);
+                    // Display the error message in case the request fails
+                    $('#tasksModal .modal-body').html('<p>No tasks assigned</p>');
+                    new bootstrap.Modal(document.getElementById('tasksModal')).show();
+                }
+            });
+        }
+
+
+
+
+
         function openUpdateModal(employeeId) {
             console.log('Opening Update Modal for Employee ID:', employeeId);
+
             $.ajax({
                 url: `/Employee/GetDetails/${employeeId}`,
                 type: 'GET',
@@ -229,7 +328,7 @@
         }
 
         // Handle the update form submission
-                $('#updateForm').submit(function(e) {
+        $('#updateForm').submit(function(e) {
             e.preventDefault(); // Prevent the default form submission
 
             // Create the formData object manually as JSON

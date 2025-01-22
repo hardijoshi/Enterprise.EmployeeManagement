@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using System.Text.Json.Serialization;
+
 
 namespace Enterprise.EmployeeManagement.DAL.Models
 {
@@ -22,6 +24,9 @@ namespace Enterprise.EmployeeManagement.DAL.Models
         public string Password { get; set; }
         [Required(ErrorMessage = "Please enter your mobile number")]
         public string MobileNumber { get; set; }
+
+        [JsonIgnore]
+        public ICollection<TaskEntity> Tasks { get; set; }
     }
 
 }

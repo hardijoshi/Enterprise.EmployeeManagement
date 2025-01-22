@@ -1,0 +1,393 @@
+Folder PATH listing for volume OS
+Volume serial number is 5A2B-4DCD
+C:.
+|   .gitattributes
+|   .gitignore
+|   directory_structure.txt
+|   Enterprise.EmployeeManagement.sln
+|   
++---.github
+|   \---workflows
++---Enterprise.EmployeeManagement
+|   |   appsettings.Development.json
+|   |   appsettings.json
+|   |   Enterprise.EmployeeManagement.Web.csproj
+|   |   Enterprise.EmployeeManagement.Web.csproj.user
+|   |   Program.cs
+|   |   Startup.cs
+|   |   
+|   +---bin
+|   |   \---Debug
+|   |       \---netcoreapp3.1
+|   |           |   appsettings.Development.json
+|   |           |   appsettings.json
+|   |           |   Enterprise.EmployeeManagement.core.dll
+|   |           |   Enterprise.EmployeeManagement.core.pdb
+|   |           |   Enterprise.EmployeeManagement.DAL.dll
+|   |           |   Enterprise.EmployeeManagement.DAL.pdb
+|   |           |   Enterprise.EmployeeManagement.Web.deps.json
+|   |           |   Enterprise.EmployeeManagement.Web.dll
+|   |           |   Enterprise.EmployeeManagement.Web.exe
+|   |           |   Enterprise.EmployeeManagement.Web.pdb
+|   |           |   Enterprise.EmployeeManagement.Web.runtimeconfig.dev.json
+|   |           |   Enterprise.EmployeeManagement.Web.runtimeconfig.json
+|   |           |   Enterprise.EmployeeManagement.Web.Views.dll
+|   |           |   Enterprise.EmployeeManagement.Web.Views.pdb
+|   |           |   Microsoft.Bcl.AsyncInterfaces.dll
+|   |           |   Microsoft.Bcl.HashCode.dll
+|   |           |   Microsoft.Data.SqlClient.dll
+|   |           |   Microsoft.EntityFrameworkCore.Abstractions.dll
+|   |           |   Microsoft.EntityFrameworkCore.Design.dll
+|   |           |   Microsoft.EntityFrameworkCore.dll
+|   |           |   Microsoft.EntityFrameworkCore.Relational.dll
+|   |           |   Microsoft.EntityFrameworkCore.SqlServer.dll
+|   |           |   Microsoft.Extensions.Caching.Abstractions.dll
+|   |           |   Microsoft.Extensions.Caching.Memory.dll
+|   |           |   Microsoft.Extensions.Configuration.Abstractions.dll
+|   |           |   Microsoft.Extensions.Configuration.Binder.dll
+|   |           |   Microsoft.Extensions.Configuration.dll
+|   |           |   Microsoft.Extensions.Configuration.FileExtensions.dll
+|   |           |   Microsoft.Extensions.Configuration.Json.dll
+|   |           |   Microsoft.Extensions.DependencyInjection.Abstractions.dll
+|   |           |   Microsoft.Extensions.DependencyInjection.dll
+|   |           |   Microsoft.Extensions.FileProviders.Abstractions.dll
+|   |           |   Microsoft.Extensions.FileProviders.Physical.dll
+|   |           |   Microsoft.Extensions.FileSystemGlobbing.dll
+|   |           |   Microsoft.Extensions.Logging.Abstractions.dll
+|   |           |   Microsoft.Extensions.Logging.dll
+|   |           |   Microsoft.Extensions.Options.dll
+|   |           |   Microsoft.Extensions.Primitives.dll
+|   |           |   Microsoft.Identity.Client.dll
+|   |           |   Microsoft.IdentityModel.JsonWebTokens.dll
+|   |           |   Microsoft.IdentityModel.Logging.dll
+|   |           |   Microsoft.IdentityModel.Protocols.dll
+|   |           |   Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+|   |           |   Microsoft.IdentityModel.Tokens.dll
+|   |           |   MySqlConnector.dll
+|   |           |   Newtonsoft.Json.dll
+|   |           |   Pomelo.EntityFrameworkCore.MySql.dll
+|   |           |   Pomelo.JsonObject.dll
+|   |           |   System.Collections.Immutable.dll
+|   |           |   System.Configuration.ConfigurationManager.dll
+|   |           |   System.Diagnostics.DiagnosticSource.dll
+|   |           |   System.IdentityModel.Tokens.Jwt.dll
+|   |           |   System.Runtime.Caching.dll
+|   |           |   System.Security.Cryptography.ProtectedData.dll
+|   |           |   
+|   |           \---runtimes
+|   |               +---unix
+|   |               |   \---lib
+|   |               |       +---netcoreapp2.0
+|   |               |       |       System.Runtime.Caching.dll
+|   |               |       |       
+|   |               |       \---netcoreapp2.1
+|   |               |               Microsoft.Data.SqlClient.dll
+|   |               |               
+|   |               +---win
+|   |               |   \---lib
+|   |               |       +---netcoreapp2.0
+|   |               |       |       System.Runtime.Caching.dll
+|   |               |       |       
+|   |               |       +---netcoreapp2.1
+|   |               |       |       Microsoft.Data.SqlClient.dll
+|   |               |       |       
+|   |               |       \---netstandard2.0
+|   |               |               System.Security.Cryptography.ProtectedData.dll
+|   |               |               
+|   |               +---win-arm64
+|   |               |   \---native
+|   |               |           sni.dll
+|   |               |           
+|   |               +---win-x64
+|   |               |   \---native
+|   |               |           sni.dll
+|   |               |           
+|   |               \---win-x86
+|   |                   \---native
+|   |                           sni.dll
+|   |                           
+|   +---Controllers
+|   |       AccountController.cs
+|   |       EmployeeController.cs
+|   |       HomeController.cs
+|   |       TasksController.cs
+|   |       
+|   +---Models
+|   |       ErrorViewModel.cs
+|   |       LoginViewModel.cs
+|   |       
+|   +---obj
+|   |   |   Enterprise.EmployeeManagement.csproj.nuget.dgspec.json
+|   |   |   Enterprise.EmployeeManagement.csproj.nuget.g.props
+|   |   |   Enterprise.EmployeeManagement.csproj.nuget.g.targets
+|   |   |   Enterprise.EmployeeManagement.Web.csproj.nuget.dgspec.json
+|   |   |   Enterprise.EmployeeManagement.Web.csproj.nuget.g.props
+|   |   |   Enterprise.EmployeeManagement.Web.csproj.nuget.g.targets
+|   |   |   project.assets.json
+|   |   |   project.nuget.cache
+|   |   |   
+|   |   \---Debug
+|   |       \---netcoreapp3.1
+|   |           |   .NETCoreApp,Version=v3.1.AssemblyAttributes.cs
+|   |           |   apphost.exe
+|   |           |   Enterpri.7661E68D.Up2Date
+|   |           |   Enterprise.EmployeeManagement.AssemblyInfo.cs
+|   |           |   Enterprise.EmployeeManagement.AssemblyInfoInputs.cache
+|   |           |   Enterprise.EmployeeManagement.assets.cache
+|   |           |   Enterprise.EmployeeManagement.GeneratedMSBuildEditorConfig.editorconfig
+|   |           |   Enterprise.EmployeeManagement.RazorAssemblyInfo.cache
+|   |           |   Enterprise.EmployeeManagement.RazorAssemblyInfo.cs
+|   |           |   Enterprise.EmployeeManagement.Web.AssemblyInfo.cs
+|   |           |   Enterprise.EmployeeManagement.Web.AssemblyInfoInputs.cache
+|   |           |   Enterprise.EmployeeManagement.Web.assets.cache
+|   |           |   Enterprise.EmployeeManagement.Web.csproj.AssemblyReference.cache
+|   |           |   Enterprise.EmployeeManagement.Web.csproj.BuildWithSkipAnalyzers
+|   |           |   Enterprise.EmployeeManagement.Web.csproj.CoreCompileInputs.cache
+|   |           |   Enterprise.EmployeeManagement.Web.csproj.FileListAbsolute.txt
+|   |           |   Enterprise.EmployeeManagement.Web.dll
+|   |           |   Enterprise.EmployeeManagement.Web.GeneratedMSBuildEditorConfig.editorconfig
+|   |           |   Enterprise.EmployeeManagement.Web.genruntimeconfig.cache
+|   |           |   Enterprise.EmployeeManagement.Web.MvcApplicationPartsAssemblyInfo.cache
+|   |           |   Enterprise.EmployeeManagement.Web.pdb
+|   |           |   Enterprise.EmployeeManagement.Web.RazorAssemblyInfo.cache
+|   |           |   Enterprise.EmployeeManagement.Web.RazorAssemblyInfo.cs
+|   |           |   Enterprise.EmployeeManagement.Web.RazorCoreGenerate.cache
+|   |           |   Enterprise.EmployeeManagement.Web.RazorTargetAssemblyInfo.cache
+|   |           |   Enterprise.EmployeeManagement.Web.RazorTargetAssemblyInfo.cs
+|   |           |   Enterprise.EmployeeManagement.Web.sourcelink.json
+|   |           |   Enterprise.EmployeeManagement.Web.TagHelpers.input.cache
+|   |           |   Enterprise.EmployeeManagement.Web.TagHelpers.output.cache
+|   |           |   Enterprise.EmployeeManagement.Web.Views.dll
+|   |           |   Enterprise.EmployeeManagement.Web.Views.pdb
+|   |           |   
+|   |           +---Razor
+|   |           |   \---Views
+|   |           |       |   _ViewImports.cshtml.g.cs
+|   |           |       |   _ViewStart.cshtml.g.cs
+|   |           |       |   
+|   |           |       +---Account
+|   |           |       |       AccessDenied.cshtml.g.cs
+|   |           |       |       Login.cshtml.g.cs
+|   |           |       |       
+|   |           |       +---Employee
+|   |           |       |       Create.cshtml.g.cs
+|   |           |       |       Index.cshtml.g.cs
+|   |           |       |       Thanks.cshtml.g.cs
+|   |           |       |       Update.cshtml.g.cs
+|   |           |       |       
+|   |           |       +---Home
+|   |           |       |       Index.cshtml.g.cs
+|   |           |       |       Privacy.cshtml.g.cs
+|   |           |       |       
+|   |           |       +---Shared
+|   |           |       |       Error.cshtml.g.cs
+|   |           |       |       _Layout.cshtml.g.cs
+|   |           |       |       _ValidationScriptsPartial.cshtml.g.cs
+|   |           |       |       
+|   |           |       \---Tasks
+|   |           |               Index.cshtml.g.cs
+|   |           |               
+|   |           \---staticwebassets
+|   |                   Enterprise.EmployeeManagement.Web.StaticWebAssets.Manifest.cache
+|   |                   Enterprise.EmployeeManagement.Web.StaticWebAssets.Pack.cache
+|   |                   msbuild.build.Enterprise.EmployeeManagement.Web.props
+|   |                   msbuild.buildMultiTargeting.Enterprise.EmployeeManagement.Web.props
+|   |                   msbuild.buildTransitive.Enterprise.EmployeeManagement.Web.props
+|   |                   msbuild.Enterprise.EmployeeManagement.Web.Microsoft.AspNetCore.StaticWebAssets.props
+|   |                   
+|   +---Properties
+|   |       launchSettings.json
+|   |       
+|   +---Views
+|   |   |   _ViewImports.cshtml
+|   |   |   _ViewStart.cshtml
+|   |   |   
+|   |   +---Account
+|   |   |       AccessDenied.cshtml
+|   |   |       Login.cshtml
+|   |   |       
+|   |   +---Employee
+|   |   |       Create.cshtml
+|   |   |       Index.cshtml
+|   |   |       Thanks.cshtml
+|   |   |       Update.cshtml
+|   |   |       
+|   |   +---Home
+|   |   |       Index.cshtml
+|   |   |       Privacy.cshtml
+|   |   |       
+|   |   +---Shared
+|   |   |       Error.cshtml
+|   |   |       _Layout.cshtml
+|   |   |       _ValidationScriptsPartial.cshtml
+|   |   |       
+|   |   \---Tasks
+|   |           Index.cshtml
+|   |           
+|   \---wwwroot
+|       |   favicon.ico
+|       |   
+|       +---css
+|       |       site.css
+|       |       
+|       +---js
+|       |       taskApp.js
+|       |       
+|       \---lib
+|           +---bootstrap
+|           |   |   LICENSE
+|           |   |   
+|           |   \---dist
+|           |       +---css
+|           |       |       bootstrap-grid.css
+|           |       |       bootstrap-grid.css.map
+|           |       |       bootstrap-grid.min.css
+|           |       |       bootstrap-grid.min.css.map
+|           |       |       bootstrap-reboot.css
+|           |       |       bootstrap-reboot.css.map
+|           |       |       bootstrap-reboot.min.css
+|           |       |       bootstrap-reboot.min.css.map
+|           |       |       bootstrap.css
+|           |       |       bootstrap.css.map
+|           |       |       bootstrap.min.css
+|           |       |       bootstrap.min.css.map
+|           |       |       
+|           |       \---js
+|           |               bootstrap.bundle.js
+|           |               bootstrap.bundle.js.map
+|           |               bootstrap.bundle.min.js
+|           |               bootstrap.bundle.min.js.map
+|           |               bootstrap.js
+|           |               bootstrap.js.map
+|           |               bootstrap.min.js
+|           |               bootstrap.min.js.map
+|           |               
+|           +---jquery
+|           |   |   LICENSE.txt
+|           |   |   
+|           |   \---dist
+|           |           jquery.js
+|           |           jquery.min.js
+|           |           jquery.min.map
+|           |           
+|           +---jquery-validation
+|           |   |   LICENSE.md
+|           |   |   
+|           |   \---dist
+|           |           additional-methods.js
+|           |           additional-methods.min.js
+|           |           jquery.validate.js
+|           |           jquery.validate.min.js
+|           |           
+|           \---jquery-validation-unobtrusive
+|                   jquery.validate.unobtrusive.js
+|                   jquery.validate.unobtrusive.min.js
+|                   LICENSE.txt
+|                   
++---Enterprise.EmployeeManagement.core
+|   |   Class1.cs
+|   |   Enterprise.EmployeeManagement.core.csproj
+|   |   
+|   +---bin
+|   |   \---Debug
+|   |       \---netcoreapp3.1
+|   |               Enterprise.EmployeeManagement.core.deps.json
+|   |               Enterprise.EmployeeManagement.core.dll
+|   |               Enterprise.EmployeeManagement.core.pdb
+|   |               
+|   +---obj
+|   |   |   Enterprise.EmployeeManagement.core.csproj.nuget.dgspec.json
+|   |   |   Enterprise.EmployeeManagement.core.csproj.nuget.g.props
+|   |   |   Enterprise.EmployeeManagement.core.csproj.nuget.g.targets
+|   |   |   project.assets.json
+|   |   |   project.nuget.cache
+|   |   |   
+|   |   \---Debug
+|   |       \---netcoreapp3.1
+|   |               .NETCoreApp,Version=v3.1.AssemblyAttributes.cs
+|   |               Enterprise.EmployeeManagement.core.AssemblyInfo.cs
+|   |               Enterprise.EmployeeManagement.core.AssemblyInfoInputs.cache
+|   |               Enterprise.EmployeeManagement.core.assets.cache
+|   |               Enterprise.EmployeeManagement.core.csproj.BuildWithSkipAnalyzers
+|   |               Enterprise.EmployeeManagement.core.csproj.CoreCompileInputs.cache
+|   |               Enterprise.EmployeeManagement.core.csproj.FileListAbsolute.txt
+|   |               Enterprise.EmployeeManagement.core.dll
+|   |               Enterprise.EmployeeManagement.core.GeneratedMSBuildEditorConfig.editorconfig
+|   |               Enterprise.EmployeeManagement.core.pdb
+|   |               Enterprise.EmployeeManagement.core.sourcelink.json
+|   |               
+|   \---Utilities
+|           PasswordHasher.cs
+|           
+\---Enterprise.EmployeeManagement.DAL
+    |   Class1.cs
+    |   Enterprise.EmployeeManagement.DAL.csproj
+    |   Enterprise.EmployeeManagement.DAL.csproj.Backup.tmp
+    |   
+    +---bin
+    |   \---Debug
+    |       \---netcoreapp3.1
+    |               Enterprise.EmployeeManagement.core.dll
+    |               Enterprise.EmployeeManagement.core.pdb
+    |               Enterprise.EmployeeManagement.DAL.deps.json
+    |               Enterprise.EmployeeManagement.DAL.dll
+    |               Enterprise.EmployeeManagement.DAL.pdb
+    |               Enterprise.EmployeeManagement.DAL.runtimeconfig.dev.json
+    |               Enterprise.EmployeeManagement.DAL.runtimeconfig.json
+    |               
+    +---Context
+    |       AppDbContext.cs
+    |       AppDbContextFactory.cs
+    |       
+    +---Migrations
+    |       20250109093402_InitialCreate.cs
+    |       20250109093402_InitialCreate.Designer.cs
+    |       20250117094704_AddTaskTable.cs
+    |       20250117094704_AddTaskTable.Designer.cs
+    |       20250117112641_AddAssignedEmployeeToTaskEntity.cs
+    |       20250117112641_AddAssignedEmployeeToTaskEntity.Designer.cs
+    |       AppDbContextModelSnapshot.cs
+    |       
+    +---Models
+    |       Employee.cs
+    |       Login.cs
+    |       TaskEntity.cs
+    |       User.cs
+    |       
+    +---obj
+    |   |   Enterprise.EmployeeManagement.DAL.csproj.EntityFrameworkCore.targets
+    |   |   Enterprise.EmployeeManagement.DAL.csproj.nuget.dgspec.json
+    |   |   Enterprise.EmployeeManagement.DAL.csproj.nuget.g.props
+    |   |   Enterprise.EmployeeManagement.DAL.csproj.nuget.g.targets
+    |   |   project.assets.json
+    |   |   project.nuget.cache
+    |   |   
+    |   \---Debug
+    |       \---netcoreapp3.1
+    |               .NETCoreApp,Version=v3.1.AssemblyAttributes.cs
+    |               Enterpri.18260BDC.Up2Date
+    |               Enterprise.EmployeeManagement.DAL.AssemblyInfo.cs
+    |               Enterprise.EmployeeManagement.DAL.AssemblyInfoInputs.cache
+    |               Enterprise.EmployeeManagement.DAL.assets.cache
+    |               Enterprise.EmployeeManagement.DAL.csproj.AssemblyReference.cache
+    |               Enterprise.EmployeeManagement.DAL.csproj.BuildWithSkipAnalyzers
+    |               Enterprise.EmployeeManagement.DAL.csproj.CoreCompileInputs.cache
+    |               Enterprise.EmployeeManagement.DAL.csproj.FileListAbsolute.txt
+    |               Enterprise.EmployeeManagement.DAL.csproj.GenerateResource.cache
+    |               Enterprise.EmployeeManagement.DAL.dll
+    |               Enterprise.EmployeeManagement.DAL.GeneratedMSBuildEditorConfig.editorconfig
+    |               Enterprise.EmployeeManagement.DAL.genruntimeconfig.cache
+    |               Enterprise.EmployeeManagement.DAL.pdb
+    |               Enterprise.EmployeeManagement.DAL.Properties.Resources.resources
+    |               Enterprise.EmployeeManagement.DAL.sourcelink.json
+    |               
+    +---Properties
+    |       Resources.Designer.cs
+    |       Resources.resx
+    |       
+    \---Repositories
+            EmployeeRepository.cs
+            IEmployeeRepository.cs
+            ITaskRepository.cs
+            TaskRepository.cs
+            

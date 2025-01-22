@@ -2,14 +2,16 @@
 using Enterprise.EmployeeManagement.DAL.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Enterprise.EmployeeManagement.DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250117094704_AddTaskTable")]
+    partial class AddTaskTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,40 +53,24 @@ namespace Enterprise.EmployeeManagement.DAL.Migrations
                     b.ToTable("Employees");
                 });
 
-            modelBuilder.Entity("Enterprise.EmployeeManagement.DAL.Models.TaskEntity", b =>
+            modelBuilder.Entity("Enterprise.EmployeeManagement.DAL.Models.Tasks", b =>
                 {
                     b.Property<int>("TaskId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("AssignedEmployeeId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
 
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Title")
-                        .IsRequired()
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
 
                     b.HasKey("TaskId");
 
-                    b.HasIndex("AssignedEmployeeId");
-
                     b.ToTable("Tasks");
-                });
-
-            modelBuilder.Entity("Enterprise.EmployeeManagement.DAL.Models.TaskEntity", b =>
-                {
-                    b.HasOne("Enterprise.EmployeeManagement.DAL.Models.Employee", "AssignedEmployee")
-                        .WithMany("Tasks")
-                        .HasForeignKey("AssignedEmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

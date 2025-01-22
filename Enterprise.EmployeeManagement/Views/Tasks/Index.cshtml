@@ -1,0 +1,206 @@
+﻿@{
+    ViewData["Title"] = "Tasks Management";
+}
+
+
+<div ng-app="taskApp" ng-controller="taskController" class="task-dashboard">
+    <!-- Header Section -->
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h2 class="mb-1">Task Management</h2>
+            <p class="text-muted">Manage and track your team's tasks</p>
+        </div>
+        <div class="col-auto">
+            <button type="button" class="btn btn-primary" data-toggle="modal"
+                    data-target="#taskModal" ng-click="prepareNewTask()"
+                    ng-if="currentUser.role === 'Manager' || currentUser.role === 'Admin'">
+                <i class="fas fa-plus"></i> Add New Task
+            </button>
+        </div>
+    </div>
+
+    <!-- Tasks Table -->
+    <div class="table-responsive table-custom">
+        <table class="table">
+            <thead class="bg-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Assigned To</th>
+                    <th>Reviewer</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="task in tasks | filter:searchText">
+                    <td class="font-weight-medium">{{task.title}}</td>
+                    <td class="text-muted">{{task.description}}</td>
+                    <td>
+                        <span ng-class="{
+                            'status-badge badge badge-secondary': task.status === 0,
+                            'status-badge badge badge-primary': task.status === 1,
+                            'status-badge badge badge-warning': task.status === 2,
+                            'status-badge badge badge-success': task.status === 3
+                        }">
+                            {{getStatusText(task.status)}}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            @* <span class="avatar-initials mr-2">{{task.assignedEmployee.firstName[0]}}{{task.assignedEmployee.lastName[0]}}</span> *@
+                            {{task.assignedEmployee.firstName}} {{task.assignedEmployee.lastName}}
+                        </div>
+                    </td>
+                    <td>{{task.reviewer.firstName}} {{task.reviewer.lastName}}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info btn-action"
+                                data-toggle="modal"
+                                data-target="#taskModal"
+                                ng-click="editTask(task)"
+                                ng-if="currentUser.role === 'Manager' || currentUser.role === 'Admin'"
+                                title="Edit Task">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger btn-action"
+                                ng-click="deleteTask(task.taskId)"
+                                ng-if="currentUser.role === 'Manager' || currentUser.role === 'Admin'"
+                                title="Delete Task">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary btn-action"
+                                data-toggle="modal"
+                                data-target="#statusModal"
+                                ng-click="prepareStatusUpdate(task)"
+                                ng-if="currentUser.role === 'Employee'"
+                                ng-disabled="task.status === 3"
+                                title="Update Status">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Task Form Modal -->
+    <div class="modal fade" id="taskModal" tabindex="-1" role="dialog" aria-labelledby="taskModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskModalLabel">{{formTitle}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" ng-click="cleanupModal('#taskModal')">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Success Message -->
+                    <div ng-if="successMessage" class="alert alert-success">
+                        <strong>{{successMessage}}</strong>
+                    </div>
+
+                    <form name="taskForm" novalidate>
+                        <input type="hidden" ng-model="task.taskId" />
+
+                        <div class="form-group">
+                            <label>Title: <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" ng-model="task.title" required
+                                   placeholder="Enter task title" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description:</label>
+                            <textarea class="form-control" ng-model="task.description"
+                                      rows="3" placeholder="Enter task description"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Assigned Employee: <span class="text-danger">*</span></label>
+                            <select class="form-control" ng-model="task.assignedEmployeeId" required>
+                                <option value="">-- Select Employee --</option>
+                                <option ng-repeat="emp in assignedEmployees" value="{{emp.id}}">
+                                    {{emp.firstName}} {{emp.lastName}}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Reviewer: <span class="text-danger">*</span></label>
+                            <select class="form-control" ng-model="task.reviewerId" required>
+                                <option value="">-- Select Reviewer --</option>
+                                <option ng-repeat="emp in reviewers" value="{{emp.id}}">
+                                    {{emp.firstName}} {{emp.lastName}}
+                                </option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" ng-click="cleanupModal('#taskModal')">Cancel</button>
+                    <button type="button" class="btn btn-primary" ng-click="saveTask()">{{buttonText}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Update Modal -->
+    <div class="modal fade" id="statusModal" tabindex="-1" role="dialog" aria-labelledby="statusModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    
+                    <h5 class="modal-title" id="statusModalLabel">Update Task Status</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" ng-click="cleanupModal('#statusModal')">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div ng-if="statusUpdateError" class="alert alert-danger">
+                        <strong>{{statusUpdateError}}</strong>
+                    </div>
+                    <form name="statusForm" novalidate>
+                        <div class="form-group">
+                            <label>Current Status: </label>
+                            <span ng-class="{
+                                'badge badge-secondary': selectedTask.status === 0,
+                                'badge badge-primary': selectedTask.status === 1,
+                                'badge badge-warning': selectedTask.status === 2,
+                                'badge badge-success': selectedTask.status === 3
+                            }">
+                                {{getStatusText(selectedTask.status)}}
+                            </span>
+                        </div>
+                        <div class="form-group">
+                            <label>New Status:</label>
+                            <select class="form-control" ng-model="newStatus" required>
+                                <option value="0" ng-disabled="!isValidTransition(0)">Not Started</option>
+                                <option value="1" ng-disabled="!isValidTransition(1)">Working</option>
+                                <option value="2" ng-disabled="!isValidTransition(2)">Pending</option>
+                                <option value="3" ng-disabled="!isValidTransition(3)">Completed</option>
+                            </select>
+                            <div ng-if="successMessage" class="alert alert-success">
+                                <strong>{{successMessage}}</strong>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" ng-click="updateTaskStatus()">Update Status</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   
+</div>
+
+@section Scripts {
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://use.fontawesome.com/releases/v5.15.4/js/all.js"></script>
+    <script src="~/js/taskApp.js"></script>
+}

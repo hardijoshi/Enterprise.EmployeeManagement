@@ -213,3 +213,62 @@
     justify-self: center; /* Center the button horizontally */
 }
 
+/* Custom styles */
+.task-dashboard {
+    background-color: #f8f9fa;
+    padding: 25px;
+    border-radius: 8px;
+}
+
+.stats-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
+}
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.table-custom {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+    .table-custom th {
+        border-top: none;
+        font-weight: 600;
+    }
+
+.btn-action {
+    padding: 0.25rem 0.5rem;
+    margin-right: 0.25rem;
+}
+
+.search-box {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+    .search-box i {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+
+.search-input {
+    padding-left: 35px;
+    border-radius: 20px;
+}
+

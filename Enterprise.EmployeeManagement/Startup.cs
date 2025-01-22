@@ -15,12 +15,18 @@ using Enterprise.EmployeeManagement.DAL.Context;
 using Pomelo.EntityFrameworkCore.MySql.Storage;
 using Enterprise.EmployeeManagement.DAL.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
-//using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using NLog;
+using NLog.Web;
+using NLog.Extensions.Logging;
+
+
 
 namespace Enterprise.EmployeeManagement.Web
 {
     public class Startup
     {
+        private ILogger<Startup> _logger;
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -31,7 +37,14 @@ namespace Enterprise.EmployeeManagement.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace); 
+                logging.AddNLog();
+            });
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            services.AddScoped<ITaskRepository, TaskRepository>();
             services.AddDistributedMemoryCache();
             services.AddSession(options =>
             {
@@ -55,8 +68,10 @@ namespace Enterprise.EmployeeManagement.Web
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
+            _logger = logger;
+            _logger.LogInformation("Starting application...");
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -82,9 +97,14 @@ namespace Enterprise.EmployeeManagement.Web
 
             app.UseEndpoints(endpoints =>
             {
+                
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Account}/{action=Login}/{id?}");
+                endpoints.MapControllers();
+
+
+
             });
 
         }
