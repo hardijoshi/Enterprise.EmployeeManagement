@@ -9,7 +9,10 @@ using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Enterprise.EmployeeManagement.core.Utilities;
 using Microsoft.AspNetCore.Authorization;
-using System.IO;
+using Microsoft.Extensions.Caching.Distributed;
+using StackExchange.Redis;
+using System.Text.Json;
+using System.Collections.Generic;
 
 namespace Enterprise.EmployeeManagement.Web.Controllers
 {
@@ -18,14 +21,14 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
     {
         private readonly IEmployeeRepository _employeeRepository;
         private readonly ITaskRepository _taskRepository;
+        private readonly IConnectionMultiplexer _redisConnection;
         private readonly ILogger<EmployeeController> _logger;
 
-
-
-        public EmployeeController(IEmployeeRepository employeeRepository, ITaskRepository taskRepository, ILogger<EmployeeController> logger)
+        public EmployeeController(IEmployeeRepository employeeRepository, ITaskRepository taskRepository, ILogger<EmployeeController> logger, IConnectionMultiplexer redisConnection)
         {
             _employeeRepository = employeeRepository;
             _taskRepository = taskRepository;
+            _redisConnection = redisConnection;
             _logger = logger;
         }
 
@@ -46,16 +49,30 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
         [Route("api/employees")]
         public async Task<IActionResult> GetEmployees()
         {
-            _logger.LogDebug("Fetching all employees");
+            var redisDb = _redisConnection.GetDatabase();
+            const string cacheKey = "employees";
+
             try
             {
+                string cachedEmployees = await redisDb.StringGetAsync(cacheKey);
+                if (!string.IsNullOrEmpty(cachedEmployees))
+                {
+                    _logger.LogInformation("Returning employees from Redis cache.");
+                    var employeesFromCache = JsonSerializer.Deserialize<List<Employee>>(cachedEmployees);
+                    return Ok(employeesFromCache);
+                }
+
                 var employees = await _employeeRepository.GetAllEmployeesAsync();
-                _logger.LogInformation("Successfully retrieved {Count} employees", employees.Count());
+                _logger.LogInformation("Employees retrieved from database. Caching result.");
+
+                var serializedEmployees = JsonSerializer.Serialize(employees);
+                await redisDb.StringSetAsync(cacheKey, serializedEmployees);
+
                 return Ok(employees);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while fetching all employees");
+                _logger.LogError(ex, "Error occurred while fetching employees");
                 return StatusCode(500, new { error = "An error occurred while fetching employees" });
             }
         }
@@ -64,91 +81,75 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
         [Route("Employee/GetDetails/{id}")]
         public async Task<IActionResult> GetDetails(int id)
         {
-            _logger.LogDebug("Fetching details for employee {EmployeeId}", id);
+            var redisDb = _redisConnection.GetDatabase();
+            string cacheKey = $"employee:{id}";
+
             try
             {
+                string cachedEmployee = await redisDb.StringGetAsync(cacheKey);
+                if (!string.IsNullOrEmpty(cachedEmployee))
+                {
+                    _logger.LogInformation("Returning employee {EmployeeId} from Redis cache.", id);
+                    var employeeFromCache = JsonSerializer.Deserialize<Employee>(cachedEmployee);
+                    return Ok(employeeFromCache);
+                }
+
                 var employee = await _employeeRepository.GetEmployeeByIdAsync(id);
                 if (employee == null)
                 {
                     _logger.LogWarning("Employee not found: {EmployeeId}", id);
                     return NotFound(new { message = "Employee not found" });
                 }
-                _logger.LogInformation("Successfully retrieved details for employee {EmployeeId}", id);
+
+                _logger.LogInformation("Caching employee {EmployeeId} details.", id);
+                var serializedEmployee = JsonSerializer.Serialize(employee);
+                await redisDb.StringSetAsync(cacheKey, serializedEmployee);
+
                 return Ok(employee);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching details for employee {EmployeeId}", id);
+                _logger.LogError(ex, "Error occurred while fetching employee details for {EmployeeId}", id);
                 return StatusCode(500, new { error = "An error occurred while fetching employee details" });
             }
         }
 
-        [HttpGet]
-        [Route("Employee/GetTasks/{employeeId}")]
-        public async Task<IActionResult> GetEmployeeTasks(int employeeId)
-        {
-            _logger.LogDebug("Fetching tasks for employee {EmployeeId}", employeeId);
-            try
-            {
-                var tasks = await _taskRepository.GetTasksByEmployeeIdAsync(employeeId);
-                if (tasks == null || tasks.Count == 0)
-                {
-                    _logger.LogInformation("No tasks found for employee {EmployeeId}", employeeId);
-                    return NotFound(new { message = "No tasks found for this employee" });
-                }
-
-                _logger.LogInformation("Retrieved {Count} tasks for employee {EmployeeId}", tasks.Count, employeeId);
-                return Ok(tasks);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching tasks for employee {EmployeeId}", employeeId);
-                return StatusCode(500, new { error = "An error occurred while fetching employee tasks" });
-            }
-        }
-
-        [Authorize(Roles = "Admin")]
-        public IActionResult Create()
-        {
-            _logger.LogDebug("Accessing employee creation form");
-            return View();
-        }
-
-        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] Employee employee)
         {
             _logger.LogInformation("Attempting to create new employee: {Email}", employee.Email);
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                try
-                {
-                    if (!string.IsNullOrEmpty(employee.Password))
-                    {
-                        employee.Password = PasswordHasher.HashPassword(employee.Password);
-                        _logger.LogDebug("Password hashed for new employee");
-                    }
-
-                    await _employeeRepository.CreateEmployeeAsync(employee);
-                    _logger.LogInformation("Successfully created employee: {Email}", employee.Email);
-
-                    return Json(new { success = true, message = "Employee created successfully." });
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error creating employee: {Email}", employee.Email);
-                    return StatusCode(500, new { error = "An error occurred while creating the employee" });
-                }
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                _logger.LogWarning("Employee creation failed due to validation errors: {@Errors}", errors);
+                return BadRequest(new { success = false, errors });
             }
 
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-            _logger.LogWarning("Employee creation failed due to validation errors: {@Errors}", errors);
-            return BadRequest(new { success = false, errors = errors });
+            try
+            {
+                if (!string.IsNullOrEmpty(employee.Password))
+                {
+                    employee.Password = PasswordHasher.HashPassword(employee.Password);
+                    _logger.LogDebug("Password hashed for new employee");
+                }
+
+                await _employeeRepository.CreateEmployeeAsync(employee);
+                _logger.LogInformation("Successfully created employee: {Email}", employee.Email);
+
+                var redisDb = _redisConnection.GetDatabase();
+                await redisDb.KeyDeleteAsync("employees"); // Invalidate employees cache
+
+                return Ok(new { success = true, message = "Employee created successfully." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating employee: {Email}", employee.Email);
+                return StatusCode(500, new { error = "An error occurred while creating the employee" });
+            }
         }
 
         [HttpPost]
-        [Route("Employee/Update")]
         public async Task<IActionResult> Update([FromBody] Employee employee)
         {
             _logger.LogInformation("Attempting to update employee: {EmployeeId}", employee.Id);
@@ -171,36 +172,16 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
                 await _employeeRepository.UpdateEmployeeAsync(employee);
                 _logger.LogInformation("Successfully updated employee {EmployeeId}", employee.Id);
 
+                var redisDb = _redisConnection.GetDatabase();
+                await redisDb.KeyDeleteAsync("employees"); // Invalidate employees cache
+                await redisDb.KeyDeleteAsync($"employee:{employee.Id}"); // Invalidate individual employee cache
+
                 return Ok(new { message = "Employee updated successfully" });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating employee {EmployeeId}", employee.Id);
                 return StatusCode(500, new { error = "An error occurred while updating the employee" });
-            }
-        }
-
-        [HttpGet]
-        [Route("Employee/Update/{id}")]
-        public async Task<IActionResult> Update(int id)
-        {
-            _logger.LogDebug("Fetching employee {EmployeeId} for update", id);
-            try
-            {
-                var employee = await _employeeRepository.GetEmployeeByIdAsync(id);
-                if (employee == null)
-                {
-                    _logger.LogWarning("Employee not found for update: {EmployeeId}", id);
-                    return NotFound();
-                }
-
-                _logger.LogInformation("Successfully retrieved employee {EmployeeId} for update", id);
-                return View("Update", employee);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching employee {EmployeeId} for update", id);
-                return StatusCode(500, new { error = "An error occurred while fetching the employee" });
             }
         }
 
@@ -225,12 +206,17 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
                 }
 
                 _logger.LogInformation("Successfully deleted employee {EmployeeId}", id);
-                return RedirectToAction("Index");
+
+                var redisDb = _redisConnection.GetDatabase();
+                await redisDb.KeyDeleteAsync("employees"); 
+                await redisDb.KeyDeleteAsync($"employee:{id}"); 
+
+                return Ok(new { message = "Employee deleted successfully." });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting employee {EmployeeId}", id);
-                return StatusCode(500, new { error = "An error occurred while processing your request", details = ex.Message });
+                return StatusCode(500, new { error = "An error occurred while processing your request" });
             }
         }
     }

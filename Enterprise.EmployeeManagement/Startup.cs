@@ -19,6 +19,8 @@ using Microsoft.Extensions.Logging;
 using NLog;
 using NLog.Web;
 using NLog.Extensions.Logging;
+using Enterprise.EmployeeManagement.DAL.Services;
+using StackExchange.Redis;
 
 
 
@@ -37,12 +39,19 @@ namespace Enterprise.EmployeeManagement.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMemoryCache();
             services.AddLogging(logging =>
             {
                 logging.ClearProviders();
                 logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace); 
                 logging.AddNLog();
             });
+            services.AddSingleton<IConnectionMultiplexer>(sp =>
+            {
+                var configuration = ConfigurationOptions.Parse(Configuration["RedisCacheOptions:Configuration"], true);
+                return ConnectionMultiplexer.Connect(configuration);
+            });
+            services.AddScoped<IEmployeeCacheService, EmployeeCacheService>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             services.AddScoped<ITaskRepository, TaskRepository>();
             services.AddDistributedMemoryCache();
