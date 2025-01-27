@@ -50,25 +50,62 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
         public async Task<IActionResult> GetEmployees()
         {
             var redisDb = _redisConnection.GetDatabase();
-            const string cacheKey = "employees";
+            const string redisSetKey = "employee_ids"; // Redis set to hold all employee IDs
 
             try
             {
-                string cachedEmployees = await redisDb.StringGetAsync(cacheKey);
-                if (!string.IsNullOrEmpty(cachedEmployees))
+                // Check if employee IDs are stored in Redis set
+                var employeeIds = await redisDb.SetMembersAsync(redisSetKey);
+                if (employeeIds.Length > 0)
                 {
-                    _logger.LogInformation("Returning employees from Redis cache.");
-                    var employeesFromCache = JsonSerializer.Deserialize<List<Employee>>(cachedEmployees);
-                    return Ok(employeesFromCache);
+                    _logger.LogInformation("Fetching employees from Redis cache (hashes).");
+
+                    var employees = new List<Employee>();
+                    foreach (var id in employeeIds)
+                    {
+                        var employeeHash = await redisDb.HashGetAllAsync($"employee:{id}");
+                        if (employeeHash.Length > 0)
+                        {
+                            var employee = new Employee
+                            {
+                                Id = (int)employeeHash.FirstOrDefault(x => x.Name == "Id").Value,
+                                FirstName = employeeHash.FirstOrDefault(x => x.Name == "First Name").Value.ToString(),
+                                LastName = employeeHash.FirstOrDefault(x => x.Name == "Last Name").Value.ToString(),
+                                Email = employeeHash.FirstOrDefault(x => x.Name == "Email").Value.ToString(),
+                                MobileNumber = employeeHash.FirstOrDefault(x => x.Name == "Mobile Number").Value.ToString(),
+                                Password = employeeHash.FirstOrDefault(x => x.Name == "Password").Value.ToString(),
+                                Role = employeeHash.FirstOrDefault(x => x.Name == "Role").Value.ToString(),
+                            };
+                            employees.Add(employee);
+                        }
+                    }
+
+                    return Ok(employees);
                 }
 
-                var employees = await _employeeRepository.GetAllEmployeesAsync();
-                _logger.LogInformation("Employees retrieved from database. Caching result.");
+                // If no employee data in cache, retrieve from database
+                var employeesFromDb = await _employeeRepository.GetAllEmployeesAsync();
+                _logger.LogInformation("Employees retrieved from database. Caching results.");
 
-                var serializedEmployees = JsonSerializer.Serialize(employees);
-                await redisDb.StringSetAsync(cacheKey, serializedEmployees);
+                foreach (var employee in employeesFromDb)
+                {
+                    // Store employee details in Redis as hash
+                    var hashEntries = new HashEntry[]
+                    {
+                    new HashEntry("Id", employee.Id),
+                    new HashEntry("First Name", employee.FirstName ?? string.Empty),
+                    new HashEntry("Last Name", employee.LastName ?? string.Empty),
+                    new HashEntry("Email", employee.Email ?? string.Empty),
+                    new HashEntry("Mobile Number", employee.MobileNumber ?? string.Empty),
+                    new HashEntry("Password", employee.Password ?? string.Empty),
+                    new HashEntry("Role", employee.Role ?? string.Empty),
+                    };
 
-                return Ok(employees);
+                    await redisDb.HashSetAsync($"employee:{employee.Id}", hashEntries);
+                    await redisDb.SetAddAsync(redisSetKey, employee.Id); // Add employee ID to the Redis set
+                }
+
+                return Ok(employeesFromDb);
             }
             catch (Exception ex)
             {
@@ -77,35 +114,61 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
             }
         }
 
+
         [HttpGet]
         [Route("Employee/GetDetails/{id}")]
         public async Task<IActionResult> GetDetails(int id)
         {
             var redisDb = _redisConnection.GetDatabase();
-            string cacheKey = $"employee:{id}";
+            string cacheKey = $"employee:{id}"; // Redis hash for individual employee
 
             try
             {
-                string cachedEmployee = await redisDb.StringGetAsync(cacheKey);
-                if (!string.IsNullOrEmpty(cachedEmployee))
+                // Retrieve the employee from Redis cache (hash)
+                var employeeHash = await redisDb.HashGetAllAsync(cacheKey);
+                if (employeeHash.Length > 0)
                 {
                     _logger.LogInformation("Returning employee {EmployeeId} from Redis cache.", id);
-                    var employeeFromCache = JsonSerializer.Deserialize<Employee>(cachedEmployee);
-                    return Ok(employeeFromCache);
+
+                    var employee = new Employee
+                    {
+                        Id = (int)employeeHash.FirstOrDefault(x => x.Name == "Id").Value,
+                        FirstName = employeeHash.FirstOrDefault(x => x.Name == "First Name").Value.ToString(),
+                        LastName = employeeHash.FirstOrDefault(x => x.Name == "Last Name").Value.ToString(),
+                        Email = employeeHash.FirstOrDefault(x => x.Name == "Email").Value.ToString(),
+                        MobileNumber = employeeHash.FirstOrDefault(x => x.Name == "Mobile Number").Value.ToString(),
+                        Password = employeeHash.FirstOrDefault(x => x.Name == "Password").Value.ToString(),
+                        Role = employeeHash.FirstOrDefault(x => x.Name == "Role").Value.ToString(),
+                    };
+
+                    return Ok(employee);
                 }
 
-                var employee = await _employeeRepository.GetEmployeeByIdAsync(id);
-                if (employee == null)
+                // If not found in cache, fetch from database
+                var employeeFromDb = await _employeeRepository.GetEmployeeByIdAsync(id);
+                if (employeeFromDb == null)
                 {
                     _logger.LogWarning("Employee not found: {EmployeeId}", id);
                     return NotFound(new { message = "Employee not found" });
                 }
 
                 _logger.LogInformation("Caching employee {EmployeeId} details.", id);
-                var serializedEmployee = JsonSerializer.Serialize(employee);
-                await redisDb.StringSetAsync(cacheKey, serializedEmployee);
 
-                return Ok(employee);
+                // Store employee details in Redis as hash
+                var hashEntries = new HashEntry[]
+                {
+                    new HashEntry("Id", employeeFromDb.Id),
+                    new HashEntry("First Name", employeeFromDb.FirstName ?? string.Empty),
+                    new HashEntry("Last Name", employeeFromDb.LastName ?? string.Empty),
+                    new HashEntry("Email", employeeFromDb.Email ?? string.Empty),
+                    new HashEntry("Mobile Number", employeeFromDb.MobileNumber ?? string.Empty),
+                    new HashEntry("Password", employeeFromDb.Password ?? string.Empty),
+                    new HashEntry("Role", employeeFromDb.Role ?? string.Empty),
+                };
+
+                await redisDb.HashSetAsync(cacheKey, hashEntries);
+
+                return Ok(employeeFromDb);
             }
             catch (Exception ex)
             {
@@ -114,15 +177,13 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
             }
         }
 
+
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] Employee employee)
         {
-            _logger.LogInformation("Attempting to create new employee: {Email}", employee.Email);
-
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-                _logger.LogWarning("Employee creation failed due to validation errors: {@Errors}", errors);
                 return BadRequest(new { success = false, errors });
             }
 
@@ -131,14 +192,13 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
                 if (!string.IsNullOrEmpty(employee.Password))
                 {
                     employee.Password = PasswordHasher.HashPassword(employee.Password);
-                    _logger.LogDebug("Password hashed for new employee");
                 }
 
                 await _employeeRepository.CreateEmployeeAsync(employee);
-                _logger.LogInformation("Successfully created employee: {Email}", employee.Email);
 
                 var redisDb = _redisConnection.GetDatabase();
-                await redisDb.KeyDeleteAsync("employees"); // Invalidate employees cache
+                await redisDb.KeyDeleteAsync("employee_ids"); // Invalidate employee IDs set
+                await redisDb.KeyDeleteAsync($"employee:{employee.Id}"); // Invalidate the new employee cache
 
                 return Ok(new { success = true, message = "Employee created successfully." });
             }
@@ -149,15 +209,13 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
             }
         }
 
+
         [HttpPost]
         public async Task<IActionResult> Update([FromBody] Employee employee)
         {
-            _logger.LogInformation("Attempting to update employee: {EmployeeId}", employee.Id);
-
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-                _logger.LogWarning("Employee update validation failed: {@ValidationErrors}", errors);
                 return BadRequest(new { error = "Invalid data", details = ModelState });
             }
 
@@ -166,15 +224,13 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
                 if (!string.IsNullOrEmpty(employee.Password))
                 {
                     employee.Password = PasswordHasher.HashPassword(employee.Password);
-                    _logger.LogDebug("Password updated and hashed for employee {EmployeeId}", employee.Id);
                 }
 
                 await _employeeRepository.UpdateEmployeeAsync(employee);
-                _logger.LogInformation("Successfully updated employee {EmployeeId}", employee.Id);
 
                 var redisDb = _redisConnection.GetDatabase();
-                await redisDb.KeyDeleteAsync("employees"); // Invalidate employees cache
-                await redisDb.KeyDeleteAsync($"employee:{employee.Id}"); // Invalidate individual employee cache
+                await redisDb.KeyDeleteAsync("employee_ids"); // Invalidate employee IDs set
+                await redisDb.KeyDeleteAsync($"employee:{employee.Id}"); // Invalidate the updated employee cache
 
                 return Ok(new { message = "Employee updated successfully" });
             }
@@ -184,6 +240,7 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
                 return StatusCode(500, new { error = "An error occurred while updating the employee" });
             }
         }
+
 
         [HttpPost]
         public async Task<IActionResult> Delete(int id)

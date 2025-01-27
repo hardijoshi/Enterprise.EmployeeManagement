@@ -1,32 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Text;
 using System.Text.Json.Serialization;
-
+using ZeroFormatter;
 
 namespace Enterprise.EmployeeManagement.DAL.Models
 {
+    [ZeroFormattable]
     public class Employee
     {
-        public int Id { get; set; }
+        [Index(0)]
+        public virtual int Id { get; set; }
 
+        [Index(1)]
         [Required(ErrorMessage = "Please enter your first name")]
-        public string FirstName { get; set; }
+        public virtual string FirstName { get; set; }
+
+        [Index(2)]
         [Required(ErrorMessage = "Please enter your last name")]
-        public string LastName { get; set; }
+        public virtual string LastName { get; set; }
+
+        [Index(3)]
         [Required(ErrorMessage = "Please select your role")]
-        public string Role { get; set; }
+        public virtual string Role { get; set; }
+
+        [Index(4)]
         [Required(ErrorMessage = "Please enter your email")]
-        public string Email { get; set; }
+        public virtual string Email { get; set; }
+
+        [Index(5)]
         [Required(ErrorMessage = "Please enter your password")]
         [MinLength(8, ErrorMessage = "Password must be at least 8 characters long")]
-        public string Password { get; set; }
+        public virtual string Password { get; set; }
+
+        [Index(6)]
         [Required(ErrorMessage = "Please enter your mobile number")]
-        public string MobileNumber { get; set; }
+        public virtual string MobileNumber { get; set; }
 
+        [Index(7)]
         [JsonIgnore]
-        public ICollection<TaskEntity> Tasks { get; set; }
+        public virtual IList<TaskEntity> Tasks { get; set; }
     }
-
 }
