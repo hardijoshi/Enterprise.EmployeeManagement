@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Enterprise.EmployeeManagement.DAL.Models
+namespace Enterprise.EmployeeManagement.DAL.DTO
 {
     public class TaskDTO
     {
@@ -35,8 +35,8 @@ namespace Enterprise.EmployeeManagement.DAL.Models
             }
         }
 
-        public bool IsOverdue { get; set; }
-        public int DaysInCurrentStatus { get; set; }
+        //public bool IsOverdue { get; set; }
+        //public int DaysInCurrentStatus { get; set; }
 
         public void UpdateStatus(TaskStatus newStatus)
         {
@@ -54,24 +54,24 @@ namespace Enterprise.EmployeeManagement.DAL.Models
                         StatusChangeDates.Remove(TaskId);
                     }
                 }
-                CalculateTaskProperties();
+                //CalculateTaskProperties();
             }
         }
 
-        public void CalculateTaskProperties()
-        {
-            DateTime? statusDate = StatusChangeDate;
-            if (statusDate.HasValue)
-            {
-                var timeSpan = DateTime.UtcNow - statusDate.Value;
-                DaysInCurrentStatus = timeSpan.Days;
-            }
-            else
-            {
-                DaysInCurrentStatus = 0;
-            }
+        //public void CalculateTaskProperties()
+        //{
+        //    DateTime? statusDate = StatusChangeDate;
+        //    if (statusDate.HasValue)
+        //    {
+        //        var timeSpan = DateTime.UtcNow - statusDate.Value;
+        //        DaysInCurrentStatus = timeSpan.Days;
+        //    }
+        //    else
+        //    {
+        //        DaysInCurrentStatus = 0;
+        //    }
 
-            IsOverdue = Status == TaskStatus.Working && DaysInCurrentStatus > 1;
-        }
+        //    IsOverdue = Status == TaskStatus.Working && DaysInCurrentStatus > 1;
+        //}
     }
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using Enterprise.EmployeeManagement.DAL.Models;
+using Enterprise.EmployeeManagement.DAL.DTO;
 
 namespace Enterprise.EmployeeManagement.DAL.Services
 {

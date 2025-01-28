@@ -1,4 +1,4 @@
-﻿using Enterprise.EmployeeManagement.DAL.Models;
+﻿using Enterprise.EmployeeManagement.DAL.DTO;
 using Enterprise.EmployeeManagement.DAL.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -57,7 +57,7 @@ public class TasksController : ControllerBase
                 _logger.LogWarning("Task with ID {taskId} not found", id);
                 return NotFound();
             }
-            task.CalculateTaskProperties();
+            //task.CalculateTaskProperties();
             _logger.LogInformation("Successfully retrieved task with ID {taskId}", id);
 
             return Ok(task);

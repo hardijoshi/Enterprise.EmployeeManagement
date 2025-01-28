@@ -87,13 +87,6 @@
                                 <small class="text-muted">Last Changed:</small>
                                 {{task.statusChangeDate | customDate}}
                             </div>
-                            <div>
-                                <small class="text-muted">Days in Status:</small>
-                                {{getDaysInStatus(task)}}
-                            </div>
-                            <div ng-if="task.isOverdue" class="text-danger">
-                                <i class="fas fa-exclamation-circle"></i> Overdue
-                            </div>
                         </div>
                     </td>
                 </tr>

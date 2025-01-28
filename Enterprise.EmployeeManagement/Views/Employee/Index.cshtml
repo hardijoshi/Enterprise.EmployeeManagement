@@ -36,7 +36,7 @@
                 <th>Update</th>
                 <th>Delete</th>
             }
-            <th>Tasks</th>
+            @* <th>Tasks</th> *@
         </tr>
     </thead>
     <tbody>
@@ -210,12 +210,12 @@
                 }
 
                 // Add tasks column for all users
-                columns.push({
-                    data: 'id',
-                    render: function(data) {
-                        return `<a href="javascript:void(0);" onclick="openTasksModal(${data});">View Tasks</a>`;
-                    }
-                });
+                // columns.push({
+                //     data: 'id',
+                //     render: function(data) {
+                //         return `<a href="javascript:void(0);" onclick="openTasksModal(${data});">View Tasks</a>`;
+                //     }
+                // });
 
                 var table = $('#employeeTable').DataTable({
                     ajax: {

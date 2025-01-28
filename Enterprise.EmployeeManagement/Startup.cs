@@ -56,6 +56,9 @@ namespace Enterprise.EmployeeManagement.Web
             services.AddScoped<ITaskService, TaskService>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             services.AddScoped<ITaskRepository, TaskRepository>();
+            services.AddScoped<IEmployeeMapper, EmployeeMapper>();
+            services.AddScoped<IEmployeeService, EmployeeService>();
+
             services.AddDistributedMemoryCache();
             services.AddSession(options =>
             {

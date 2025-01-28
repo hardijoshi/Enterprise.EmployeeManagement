@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Enterprise.EmployeeManagement.DAL.Models;
-
+using Enterprise.EmployeeManagement.DAL.DTO;
 public enum TaskStatus
 {
     NotStarted = 0,

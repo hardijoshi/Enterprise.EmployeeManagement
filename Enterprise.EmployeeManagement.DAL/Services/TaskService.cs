@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Enterprise.EmployeeManagement.DAL.Models;
+using Enterprise.EmployeeManagement.DAL.DTO;
 using Enterprise.EmployeeManagement.DAL.Repositories;
 
 namespace Enterprise.EmployeeManagement.DAL.Services
@@ -29,7 +29,7 @@ namespace Enterprise.EmployeeManagement.DAL.Services
             }
 
             var taskDto = _taskMapper.MapToDTO(entity);
-            taskDto.CalculateTaskProperties();
+            //taskDto.CalculateTaskProperties();
             return taskDto;
         }
 
@@ -44,7 +44,7 @@ namespace Enterprise.EmployeeManagement.DAL.Services
             {
                 taskDto.AssignedEmployeeName = await _employeeRepository.GetEmployeeNameById(taskDto.AssignedEmployeeId);
                 taskDto.ReviewerName = await _employeeRepository.GetEmployeeNameById(taskDto.ReviewerId);
-                taskDto.CalculateTaskProperties();
+                //taskDto.CalculateTaskProperties();
             }
 
             return taskDtos;
@@ -56,7 +56,7 @@ namespace Enterprise.EmployeeManagement.DAL.Services
             var created = await _taskRepository.AddTaskAsync(entity);
 
             var createdTaskDto = _taskMapper.MapToDTO(created);
-            createdTaskDto.CalculateTaskProperties();
+            //createdTaskDto.CalculateTaskProperties();
 
             createdTaskDto.AssignedEmployeeName = await _employeeRepository.GetEmployeeNameById(created.AssignedEmployeeId);
             createdTaskDto.ReviewerName = await _employeeRepository.GetEmployeeNameById(created.ReviewerId);

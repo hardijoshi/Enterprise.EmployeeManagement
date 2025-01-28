@@ -12,6 +12,7 @@ app.filter('customDate', ['$filter', function ($filter) {
         }
     };
 }]);
+
 app.controller('taskController', function ($scope, $http) {
 
     $http.get('/api/user/current')  // This endpoint should return the current user's data (role, name, etc.)
