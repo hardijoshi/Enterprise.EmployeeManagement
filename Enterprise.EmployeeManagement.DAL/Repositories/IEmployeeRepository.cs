@@ -11,5 +11,7 @@ namespace Enterprise.EmployeeManagement.DAL.Repositories
         Task CreateEmployeeAsync(Employee employee);
         Task UpdateEmployeeAsync(Employee employee);
         Task<bool> DeleteEmployeeAsync(int id);
+
+        Task<string> GetEmployeeNameById(int employeeId);
     }
 }

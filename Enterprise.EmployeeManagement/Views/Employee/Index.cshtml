@@ -1,5 +1,4 @@
-﻿
-@using Enterprise.EmployeeManagement.DAL.Models
+﻿@using Enterprise.EmployeeManagement.DAL.Models
 @{
     ViewData["Title"] = "Employee List";
 }
@@ -171,7 +170,7 @@
 
 
 
-@section Scripts{
+@section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.css">
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.js"></script>
@@ -333,7 +332,7 @@
 
             // Create the formData object manually as JSON
             const formData = {
-                Id: parseInt($('#employeeId').val(), 10), 
+                Id: parseInt($('#employeeId').val(), 10),
                 FirstName: $('#firstName').val(),
                 LastName: $('#lastName').val(),
                 Role: $('#role').val(),
@@ -419,4 +418,3 @@
 
     </script>
 }
-

@@ -32,6 +32,7 @@ namespace Enterprise.EmployeeManagement.Web
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+
         }
 
         public IConfiguration Configuration { get; }
@@ -51,7 +52,8 @@ namespace Enterprise.EmployeeManagement.Web
                 var configuration = ConfigurationOptions.Parse(Configuration["RedisCacheOptions:Configuration"], true);
                 return ConnectionMultiplexer.Connect(configuration);
             });
-            services.AddScoped<IEmployeeCacheService, EmployeeCacheService>();
+            services.AddScoped<ITaskMapper, TaskMapper>();
+            services.AddScoped<ITaskService, TaskService>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             services.AddScoped<ITaskRepository, TaskRepository>();
             services.AddDistributedMemoryCache();

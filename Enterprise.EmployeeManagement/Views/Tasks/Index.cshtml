@@ -30,8 +30,10 @@
                     <th>Assigned To</th>
                     <th>Reviewer</th>
                     <th>Actions</th>
+                    <th>Status Details</th>
                 </tr>
             </thead>
+
             <tbody>
                 <tr ng-repeat="task in tasks | filter:searchText">
                     <td class="font-weight-medium">{{task.title}}</td>
@@ -49,10 +51,10 @@
                     <td>
                         <div class="d-flex align-items-center">
                             @* <span class="avatar-initials mr-2">{{task.assignedEmployee.firstName[0]}}{{task.assignedEmployee.lastName[0]}}</span> *@
-                            {{task.assignedEmployee.firstName}} {{task.assignedEmployee.lastName}}
+                            {{task.assignedEmployeeName}}
                         </div>
                     </td>
-                    <td>{{task.reviewer.firstName}} {{task.reviewer.lastName}}</td>
+                    <td>{{task.reviewerName}}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-info btn-action"
                                 data-toggle="modal"
@@ -77,6 +79,22 @@
                                 title="Update Status">
                             <i class="fas fa-sync-alt"></i>
                         </button>
+
+                    </td>
+                    <td>
+                        <div class="status-details">
+                            <div>
+                                <small class="text-muted">Last Changed:</small>
+                                {{task.statusChangeDate | customDate}}
+                            </div>
+                            <div>
+                                <small class="text-muted">Days in Status:</small>
+                                {{getDaysInStatus(task)}}
+                            </div>
+                            <div ng-if="task.isOverdue" class="text-danger">
+                                <i class="fas fa-exclamation-circle"></i> Overdue
+                            </div>
+                        </div>
                     </td>
                 </tr>
             </tbody>

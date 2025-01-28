@@ -1,5 +1,17 @@
 ﻿var app = angular.module('taskApp', []);
 
+app.filter('customDate', ['$filter', function ($filter) {
+    return function (input) {
+        if (!input) return 'Not set';
+        try {
+            const date = new Date(input);
+            if (isNaN(date.getTime())) return 'Not set';
+            return date.toLocaleString();
+        } catch (e) {
+            return 'Not set';
+        }
+    };
+}]);
 app.controller('taskController', function ($scope, $http) {
 
     $http.get('/api/user/current')  // This endpoint should return the current user's data (role, name, etc.)
@@ -228,25 +240,59 @@ app.controller('taskController', function ($scope, $http) {
     $scope.updateTaskStatus = function () {
         if (!$scope.selectedTask || !$scope.newStatus) return;
 
+        console.log('Updating status for task:', $scope.selectedTask);
+        console.log('New status:', $scope.newStatus);
+
         $http.patch(`/api/tasks/${$scope.selectedTask.taskId}/status`, $scope.newStatus)
             .then(function (response) {
+                console.log('Status update response:', response);
+
+                // Force status change date update
+                $scope.selectedTask.statusChangeDate = new Date().toISOString();
                 $scope.selectedTask.status = $scope.newStatus;
-                
-                $scope.loadTasks(); // Refresh the task list
+
+                $scope.loadTasks();
                 $scope.successMessage = 'Status Updated successfully!';
 
-                // Close the modal after a short delay
                 setTimeout(function () {
                     $scope.cleanupModal('#statusModal');
                 }, 1500);
-               
             })
             .catch(function (error) {
+                console.error('Status update error:', error);
                 $scope.statusUpdateError = error.data || 'Error updating task status';
             });
     };
+
+    $scope.getStatusText = function (status) {
+        switch (parseInt(status)) {
+            case 0: return 'Not Started';
+            case 1: return 'Working';
+            case 2: return 'Pending';
+            case 3: return 'Completed';
+            default: return 'Unknown';
+        }
+    };
+
+    $scope.getDaysInStatus = function (task) {
+        if (!task?.statusChangeDate) return 0;
+
+        try {
+            const changeDate = new Date(task.statusChangeDate);
+            if (isNaN(changeDate.getTime())) return 0;
+
+            const now = new Date();
+            const diffTime = Math.abs(now - changeDate);
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        } catch (e) {
+            console.error('Error calculating days in status:', e);
+            return 0;
+        }
+    };
+
 
     // Initialize the page
     $scope.resetForm();
     $scope.loadData();
 });
+

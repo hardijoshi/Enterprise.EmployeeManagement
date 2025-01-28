@@ -1,161 +1,153 @@
-﻿using Enterprise.EmployeeManagement.DAL.Context;
-using Enterprise.EmployeeManagement.DAL.Models;
+﻿using Enterprise.EmployeeManagement.DAL.Models;
+using Enterprise.EmployeeManagement.DAL.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
-
 
 [ApiController]
 [Route("api/[controller]")]
 public class TasksController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly ITaskService _taskService;
     private readonly ILogger<TasksController> _logger;
 
-    public TasksController(AppDbContext context, ILogger<TasksController> logger)
+    public TasksController(ITaskService taskService, ILogger<TasksController> logger)
     {
-        _context = context;
+        _taskService = taskService;
         _logger = logger;
         _logger.LogInformation("TasksController Started");
     }
 
     [HttpGet]
- 
     public async Task<IActionResult> GetTasks()
     {
-        _logger.LogInformation("Fetching tasks from the database...");
-        var tasks = await _context.Tasks
-            .Include(t => t.AssignedEmployee)
-            .Include(t => t.Reviewer)
-            .ToListAsync();
-        if (tasks != null && tasks.Any())
+        _logger.LogInformation("Fetching all tasks...");
+        try
         {
-            _logger.LogInformation("Successfully retrieved {taskCount} tasks.", tasks.Count);
+            var tasks = await _taskService.GetAllAsync();
+            if (tasks == null || !tasks.Any())
+            {
+                _logger.LogInformation("No tasks found");
+                return NotFound();
+            }
+
+            _logger.LogInformation("Successfully retrieved tasks");
             return Ok(tasks);
         }
-
-        _logger.LogInformation("No tasks found in the database");
-        return NotFound(); 
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving tasks");
+            return StatusCode(500, "Internal server error occurred while retrieving tasks");
+        }
     }
 
-    
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetTask(int id)
+    {
+        _logger.LogInformation("Fetching task with ID {taskId}...", id);
+        try
+        {
+            var task = await _taskService.GetByIdAsync(id);
+            if (task == null)
+            {
+                _logger.LogWarning("Task with ID {taskId} not found", id);
+                return NotFound();
+            }
+            task.CalculateTaskProperties();
+            _logger.LogInformation("Successfully retrieved task with ID {taskId}", id);
+
+            return Ok(task);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving task with ID {taskId}", id);
+            return StatusCode(500, "Internal server error occurred while retrieving the task");
+        }
+    }
+
     [HttpPost]
     [Authorize(Roles = "Manager, Admin")]
-    public async Task<IActionResult> AddTask([FromBody] TaskEntity taskEntity)
+    public async Task<IActionResult> AddTask([FromBody] TaskDTO taskDto)
     {
-        _logger.LogInformation("Adding new tasks.....");
+        _logger.LogInformation("Adding new task...");
         if (!ModelState.IsValid)
         {
-            _logger.LogWarning("ModelState is invalid.");
+            _logger.LogWarning("Invalid model state");
             return BadRequest(ModelState);
-        }
-            
-
-        // Verify the IDs exist
-        var assignedEmployeeExists = await _context.Employees.AnyAsync(e => e.Id == taskEntity.AssignedEmployeeId);
-        var reviewerExists = await _context.Employees.AnyAsync(e => e.Id == taskEntity.ReviewerId);
-
-        if (!assignedEmployeeExists || !reviewerExists)
-        {
-            _logger.LogWarning("Invalid AssignedEmployeeId or ReviewerId provided.");
-            return BadRequest("Invalid AssignedEmployeeId or ReviewerId");
         }
 
         try
         {
-            _context.Entry(taskEntity).State = EntityState.Added;
-            await _context.SaveChangesAsync();
-            _logger.LogInformation("Task with ID {taskId} successfully added.", taskEntity.TaskId);
-
-            var savedTask = await _context.Tasks
-                .Include(t => t.AssignedEmployee)
-                .Include(t => t.Reviewer)
-                .FirstOrDefaultAsync(t => t.TaskId == taskEntity.TaskId);
-
-            return CreatedAtAction(nameof(GetTasks), new { id = taskEntity.TaskId }, savedTask);
+            var createdTask = await _taskService.CreateAsync(taskDto);
+            _logger.LogInformation("Task successfully added with ID {taskId}", createdTask.TaskId);
+            return CreatedAtAction(nameof(GetTask), new { id = createdTask.TaskId }, createdTask);
         }
-        catch (DbUpdateException ex)
+        catch (KeyNotFoundException ex)
         {
-            _logger.LogError(ex, "Error saving task with ID {taskId}.", taskEntity.TaskId);
-            return BadRequest($"Error saving task: {ex.Message}");
+            _logger.LogWarning(ex, "Invalid employee reference in task creation");
+            return BadRequest("Invalid AssignedEmployeeId or ReviewerId");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding task");
+            return StatusCode(500, "Internal server error occurred while creating the task");
         }
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Manager, Admin")]
-    public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskEntity taskEntity)
+    public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskDTO taskDto)
     {
         _logger.LogInformation("Updating task with ID {taskId}...", id);
-        if (id != taskEntity.TaskId)
+        if (id != taskDto.TaskId)
         {
-            _logger.LogWarning("Task ID in the URL does not match the TaskId in the body.");
-            return BadRequest();
-        }
-           
-
-        // Verify employees exist
-        var assignedEmployeeExists = await _context.Employees.AnyAsync(e => e.Id == taskEntity.AssignedEmployeeId);
-        var reviewerExists = await _context.Employees.AnyAsync(e => e.Id == taskEntity.ReviewerId);
-
-        if (!assignedEmployeeExists || !reviewerExists)
-        {
-            _logger.LogWarning("Invalid AssignedEmployeeId or ReviewerId provided.");
-            return BadRequest("Invalid AssignedEmployeeId or ReviewerId");
+            _logger.LogWarning("Task ID mismatch");
+            return BadRequest("ID mismatch");
         }
 
         try
         {
-            // Get existing task
-            var existingTask = await _context.Tasks
-                .FirstOrDefaultAsync(t => t.TaskId == id);
-
-            if (existingTask == null)
-            {
-                _logger.LogInformation("Task with ID {taskId} not found.", id);
-                return NotFound();
-            }
-                
-
-            // Update only the scalar properties
-            existingTask.Title = taskEntity.Title;
-            existingTask.Description = taskEntity.Description;
-            existingTask.Status = taskEntity.Status;
-            existingTask.AssignedEmployeeId = taskEntity.AssignedEmployeeId;
-            existingTask.ReviewerId = taskEntity.ReviewerId;
-
-            await _context.SaveChangesAsync();
-            _logger.LogInformation("Task with ID {taskId} successfully updated.", id);
+            await _taskService.UpdateAsync(taskDto);
+            _logger.LogInformation("Task with ID {taskId} successfully updated", id);
             return NoContent();
         }
-        catch (DbUpdateException ex)
+        catch (KeyNotFoundException)
         {
-            _logger.LogError(ex, "Error updating task with ID {taskId}.", id);
-            return BadRequest($"Error updating task: {ex.Message}");
+            _logger.LogWarning("Task with ID {taskId} not found", id);
+            return NotFound();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating task with ID {taskId}", id);
+            return StatusCode(500, "Internal server error occurred while updating the task");
         }
     }
-
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Manager, Admin")]
     public async Task<IActionResult> DeleteTask(int id)
     {
         _logger.LogInformation("Deleting task with ID {taskId}...", id);
-        var taskEntity = await _context.Tasks.FindAsync(id);
-        if (taskEntity == null)
+        try
         {
-            _logger.LogInformation("Task with ID {taskId} not found.", id);
+            await _taskService.DeleteAsync(id);
+            _logger.LogInformation("Task with ID {taskId} successfully deleted", id);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            _logger.LogWarning("Task with ID {taskId} not found", id);
             return NotFound();
         }
-            
-
-        _context.Tasks.Remove(taskEntity);
-        await _context.SaveChangesAsync();
-        _logger.LogInformation("Task with ID {taskId} successfully deleted.", id);
-        return NoContent();
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting task with ID {taskId}", id);
+            return StatusCode(500, "Internal server error occurred while deleting the task");
+        }
     }
 
     [HttpPatch("{id}/status")]
@@ -163,38 +155,57 @@ public class TasksController : ControllerBase
     public async Task<IActionResult> UpdateTaskStatus(int id, [FromBody] TaskStatus status)
     {
         _logger.LogInformation("Updating status for task with ID {taskId}...", id);
-        var existingTask = await _context.Tasks.FirstOrDefaultAsync(t => t.TaskId == id);
-        if (existingTask == null)
-        {
-            _logger.LogInformation("Task with ID {taskId} not found.", id);
-            return NotFound();
-        }
-            
-
         try
         {
-            // Validate status transition
+            var existingTask = await _taskService.GetByIdAsync(id);
+            if (existingTask == null)
+            {
+                _logger.LogWarning("Task with ID {taskId} not found", id);
+                return NotFound();
+            }
+
             if (!IsValidStatusTransition(existingTask.Status, status))
             {
-                _logger.LogWarning("Invalid status transition from {currentStatus} to {newStatus} for task with ID {taskId}.", existingTask.Status, status, id);
+                _logger.LogWarning("Invalid status transition from {currentStatus} to {newStatus}",
+                    existingTask.Status, status);
                 return BadRequest($"Invalid status transition from {existingTask.Status} to {status}");
             }
 
-            existingTask.Status = status;
-            await _context.SaveChangesAsync();
-            _logger.LogInformation("Task status for task ID {taskId} successfully updated to {status}.", id, status);
+            // Use the new UpdateStatus method
+            existingTask.UpdateStatus(status);
+            await _taskService.UpdateAsync(existingTask);
+
+            _logger.LogInformation("Task status successfully updated to {status}", status);
             return NoContent();
         }
-        catch (DbUpdateException ex)
+        catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating status for task with ID {taskId}.", id);
-            return BadRequest($"Error updating task status: {ex.Message}");
+            _logger.LogError(ex, "Error updating status for task with ID {taskId}", id);
+            return StatusCode(500, "Internal server error occurred while updating the task status");
         }
     }
 
+
+
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<TaskDTO>> GetTaskById(int id)
+    {
+        try
+        {
+            var taskDto = await _taskService.GetByIdAsync(id);
+            return Ok(taskDto); // Return the TaskDTO in the response
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { Message = ex.Message });
+        }
+    }
+    
+
+
     private bool IsValidStatusTransition(TaskStatus currentStatus, TaskStatus newStatus)
     {
-        // Define valid status transitions
         switch (currentStatus)
         {
             case TaskStatus.NotStarted:
@@ -209,6 +220,5 @@ public class TasksController : ControllerBase
                 return false;
         }
     }
-
 
 }

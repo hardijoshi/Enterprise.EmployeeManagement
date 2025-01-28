@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Enterprise.EmployeeManagement.DAL.Models;
 using Enterprise.EmployeeManagement.DAL.Context;
+using System.Linq;
 
 namespace Enterprise.EmployeeManagement.DAL.Repositories
 {
@@ -81,6 +82,20 @@ namespace Enterprise.EmployeeManagement.DAL.Repositories
             _context.Employees.Remove(employee);
             await _context.SaveChangesAsync();
             return true; // Successfully deleted
+        }
+
+        public async Task<string> GetEmployeeNameById(int employeeId)
+        {
+            var employee = await _context.Employees
+                                         .Where(e => e.Id == employeeId)
+                                         .FirstOrDefaultAsync();
+
+            if (employee == null)
+            {
+                return null;
+            }
+
+            return $"{employee.FirstName} {employee.LastName}";
         }
 
 

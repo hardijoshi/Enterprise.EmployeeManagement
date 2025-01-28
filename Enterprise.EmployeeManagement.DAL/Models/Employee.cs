@@ -12,17 +12,22 @@ namespace Enterprise.EmployeeManagement.DAL.Models
         [Index(0)]
         public virtual int Id { get; set; }
 
-        [Index(1)]
         [Required(ErrorMessage = "Please enter your first name")]
+
+        [Index(1)]
         public virtual string FirstName { get; set; }
 
-        [Index(2)]
         [Required(ErrorMessage = "Please enter your last name")]
+
+        [Index(2)]
         public virtual string LastName { get; set; }
 
         [Index(3)]
         [Required(ErrorMessage = "Please select your role")]
-        public virtual string Role { get; set; }
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public virtual RoleType Role { get; set; }
+
+        public virtual string RoleInString => Role.ToString();
 
         [Index(4)]
         [Required(ErrorMessage = "Please enter your email")]
@@ -37,8 +42,14 @@ namespace Enterprise.EmployeeManagement.DAL.Models
         [Required(ErrorMessage = "Please enter your mobile number")]
         public virtual string MobileNumber { get; set; }
 
-        [Index(7)]
-        [JsonIgnore]
+        [IgnoreFormat]
         public virtual IList<TaskEntity> Tasks { get; set; }
+    }
+
+    public enum RoleType
+    {
+        Admin = 0,
+        Manager = 1,
+        Employee = 2,
     }
 }

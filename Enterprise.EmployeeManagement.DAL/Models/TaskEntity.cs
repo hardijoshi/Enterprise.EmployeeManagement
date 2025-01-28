@@ -23,6 +23,8 @@ public class TaskEntity
 
     [Required]
     public TaskStatus Status { get; set; }
+    //public string StatusInString => Status.ToString();
+
 
     [Required(ErrorMessage = "Assigned Employee is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "Assigned Employee Id must be a valid positive number.")]

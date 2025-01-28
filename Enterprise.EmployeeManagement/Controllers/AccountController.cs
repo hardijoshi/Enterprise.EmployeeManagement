@@ -51,7 +51,7 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
                     var claims = new List<Claim>
                     {
                         new Claim(ClaimTypes.Name, employee.Email),
-                        new Claim(ClaimTypes.Role, employee.Role),
+                        new Claim(ClaimTypes.Role, employee.Role.ToString()),
                         new Claim("EmployeeId", employee.Id.ToString()) // Custom claim for Employee ID
                     };
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
