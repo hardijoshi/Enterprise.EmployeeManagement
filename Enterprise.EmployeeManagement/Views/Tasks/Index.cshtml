@@ -29,8 +29,11 @@
                     <th>Status</th>
                     <th>Assigned To</th>
                     <th>Reviewer</th>
+                    <th data-toggle="tooltip" title="Percentage of time elapsed">Time Elapsed</th>
+                    <th>Due</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
                     <th>Actions</th>
-                    <th>Status Details</th>
                 </tr>
             </thead>
 
@@ -55,7 +58,31 @@
                         </div>
                     </td>
                     <td>{{task.reviewerName}}</td>
+                    
                     <td>
+                        <div class="progress" data-toggle="tooltip"
+                             title="Shows percentage of allocated time that has elapsed">
+                            <div class="progress-bar" role="progressbar"
+                                 ng-style="{'width': getTimeElapsed(task) + '%'}"
+                                 ng-class="{
+                                 'bg-info' : getTimeElapsed(task) < 50,
+                                 'bg-warning': getTimeElapsed(task) >= 50 && getTimeElapsed(task) < 75,
+                                 'bg-danger': getTimeElapsed(task) >= 75 && task.status !== 3,
+                                 'bg-success': task.status === 3}">
+                                        {{getTimeElapsed(task)}}%
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <td>
+                        <span ng-class="{'text-danger': getTimeRemaining(task) === 'Overdue'}">
+                            {{getTimeRemaining(task)}}
+                        </span>
+                    </td>
+                    
+                    <td>{{task.startDate | customDate}}</td>
+                    <td>{{task.deadlineDate | customDate}}</td>
+                    <td class="d-flex gap-2">
                         <button class="btn btn-sm btn-outline-info btn-action"
                                 data-toggle="modal"
                                 data-target="#taskModal"
@@ -79,16 +106,15 @@
                                 title="Update Status">
                             <i class="fas fa-sync-alt"></i>
                         </button>
+                        <button class="btn btn-sm btn-outline-warning btn-action"
+                                ng-if="getTimeRemaining(task) === 'Overdue' && (currentUser.role === 'Manager' || currentUser.role === 'Admin')"
+                                ng-click="sendReminder(task)"
+                                title="Send Reminder">
+                            <i class="fas fa-bell"></i>
+                        </button>
+                    </td>
 
-                    </td>
-                    <td>
-                        <div class="status-details">
-                            <div>
-                                <small class="text-muted">Last Changed:</small>
-                                {{task.statusChangeDate | customDate}}
-                            </div>
-                        </div>
-                    </td>
+
                 </tr>
             </tbody>
         </table>
@@ -143,6 +169,21 @@
                                     {{emp.firstName}} {{emp.lastName}}
                                 </option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Start Date: <span class="text-danger">*</span></label>
+                            <input type="datetime-local"
+                                   class="form-control"
+                                   ng-model="task.startDate"
+                                   required />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Deadline Date: <span class="text-danger">*</span></label>
+                            <input type="datetime-local"
+                                   class="form-control"
+                                   ng-model="task.deadlineDate"
+                                   required />
                         </div>
                     </form>
                 </div>

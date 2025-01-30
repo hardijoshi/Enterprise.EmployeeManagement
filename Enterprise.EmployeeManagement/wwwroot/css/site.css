@@ -272,3 +272,18 @@
     border-radius: 20px;
 }
 
+.progress {
+    height: 20px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+.progress-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    transition: width 0.6s ease;
+}
+

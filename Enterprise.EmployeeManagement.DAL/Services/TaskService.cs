@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Enterprise.EmployeeManagement.DAL.DTO;
@@ -52,12 +53,19 @@ namespace Enterprise.EmployeeManagement.DAL.Services
 
         public async Task<TaskDTO> CreateAsync(TaskDTO taskDto)
         {
+            // Validate dates before creating
+            taskDto.ValidateDates();
+
+            // Ensure StartDate is not in the past for new tasks
+            if (taskDto.StartDate < DateTime.UtcNow)
+            {
+                taskDto.StartDate = DateTime.UtcNow;
+            }
+
             var entity = _taskMapper.MapToEntity(taskDto);
             var created = await _taskRepository.AddTaskAsync(entity);
 
             var createdTaskDto = _taskMapper.MapToDTO(created);
-            //createdTaskDto.CalculateTaskProperties();
-
             createdTaskDto.AssignedEmployeeName = await _employeeRepository.GetEmployeeNameById(created.AssignedEmployeeId);
             createdTaskDto.ReviewerName = await _employeeRepository.GetEmployeeNameById(created.ReviewerId);
 
@@ -66,8 +74,31 @@ namespace Enterprise.EmployeeManagement.DAL.Services
 
         public async Task UpdateAsync(TaskDTO taskDto)
         {
-            var entity = _taskMapper.MapToEntity(taskDto);
+            // Validate dates before updating
+            taskDto.ValidateDates();
 
+            // Get existing task to check if dates can be modified
+            var existingTask = await _taskRepository.GetTaskByIdAsync(taskDto.TaskId);
+            if (existingTask == null)
+            {
+                throw new KeyNotFoundException($"Task with ID {taskDto.TaskId} not found");
+            }
+
+            // Don't allow modifying start date if task has already started
+            if (existingTask.Status != TaskStatus.NotStarted &&
+                taskDto.StartDate != existingTask.StartDate)
+            {
+                throw new ValidationException("Cannot modify start date for tasks that have already started");
+            }
+
+            // Don't allow modifying deadline for completed tasks
+            if (existingTask.Status == TaskStatus.Completed &&
+                taskDto.DeadlineDate != existingTask.DeadlineDate)
+            {
+                throw new ValidationException("Cannot modify deadline for completed tasks");
+            }
+
+            var entity = _taskMapper.MapToEntity(taskDto);
             await _taskRepository.UpdateTaskAsync(entity);
         }
 

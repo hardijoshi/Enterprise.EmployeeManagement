@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -14,11 +15,15 @@ public class TasksController : ControllerBase
 {
     private readonly ITaskService _taskService;
     private readonly ILogger<TasksController> _logger;
+    private readonly IEmployeeService _employeeService;
+    private readonly IEmailService _emailService;
 
-    public TasksController(ITaskService taskService, ILogger<TasksController> logger)
+    public TasksController(ITaskService taskService, ILogger<TasksController> logger, IEmployeeService employeeService, IEmailService emailService)
     {
         _taskService = taskService;
         _logger = logger;
+        _employeeService = employeeService;
+        _emailService = emailService;
         _logger.LogInformation("TasksController Started");
     }
 
@@ -82,6 +87,27 @@ public class TasksController : ControllerBase
 
         try
         {
+            // Set default dates if not provided
+            if (taskDto.StartDate == default)
+            {
+                taskDto.StartDate = DateTime.UtcNow;
+            }
+
+            if (taskDto.DeadlineDate == default)
+            {
+                taskDto.DeadlineDate = taskDto.StartDate.AddDays(7); // Default 7-day deadline
+            }
+
+            // Validate dates
+            try
+            {
+                taskDto.ValidateDates();
+            }
+            catch (ValidationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+
             var createdTask = await _taskService.CreateAsync(taskDto);
             _logger.LogInformation("Task successfully added with ID {taskId}", createdTask.TaskId);
             return CreatedAtAction(nameof(GetTask), new { id = createdTask.TaskId }, createdTask);
@@ -111,9 +137,24 @@ public class TasksController : ControllerBase
 
         try
         {
+            // Validate dates
+            try
+            {
+                taskDto.ValidateDates();
+            }
+            catch (ValidationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+
             await _taskService.UpdateAsync(taskDto);
             _logger.LogInformation("Task with ID {taskId} successfully updated", id);
             return NoContent();
+        }
+        catch (ValidationException ex)
+        {
+            _logger.LogWarning("Validation error: {Message}", ex.Message);
+            return BadRequest(new { Message = ex.Message });
         }
         catch (KeyNotFoundException)
         {
@@ -188,7 +229,7 @@ public class TasksController : ControllerBase
 
 
 
-    [HttpGet("{id}")]
+    [HttpGet("{id}/details")]
     public async Task<ActionResult<TaskDTO>> GetTaskById(int id)
     {
         try
@@ -201,8 +242,46 @@ public class TasksController : ControllerBase
             return NotFound(new { Message = ex.Message });
         }
     }
-    
 
+   
+    [HttpPost("{id}/send-reminder")]
+    [Authorize(Roles = "Manager, Admin")]
+    public async Task<IActionResult> SendReminder(int id)
+    {
+        try
+        {
+            var task = await _taskService.GetByIdAsync(id);
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            if (task.DeadlineDate > DateTime.UtcNow)
+            {
+                return BadRequest("Task is not overdue");
+            }
+
+            // Updated method name to match the service implementation
+            var employee = await _employeeService.GetEmployeeByIdAsync(task.AssignedEmployeeId);
+            if (employee == null)
+            {
+                return NotFound("Assigned employee not found");
+            }
+
+            await _emailService.SendReminderEmailAsync(
+                employee.Email,
+                task.Title,
+                task.DeadlineDate
+            );
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending reminder for task {taskId}", id);
+            return StatusCode(500, "Failed to send reminder");
+        }
+    }
 
     private bool IsValidStatusTransition(TaskStatus currentStatus, TaskStatus newStatus)
     {

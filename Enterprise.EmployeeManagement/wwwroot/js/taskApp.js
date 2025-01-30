@@ -1,17 +1,16 @@
 ﻿var app = angular.module('taskApp', []);
 
-app.filter('customDate', ['$filter', function ($filter) {
-    return function (input) {
-        if (!input) return 'Not set';
-        try {
-            const date = new Date(input);
-            if (isNaN(date.getTime())) return 'Not set';
-            return date.toLocaleString();
-        } catch (e) {
-            return 'Not set';
-        }
+app.filter('customDate', function () {
+    return function (dateString) {
+        if (!dateString) return '';
+        var date = new Date(dateString);
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     };
-}]);
+});  
+
 
 app.controller('taskController', function ($scope, $http) {
 
@@ -107,6 +106,29 @@ app.controller('taskController', function ($scope, $http) {
             alert('Please select a reviewer');
             return false;
         }
+
+        // Date validation
+        const startDate = new Date($scope.task.startDate);
+        const deadlineDate = new Date($scope.task.deadlineDate);
+        const now = new Date();
+
+        if (isNaN(startDate.getTime())) {
+            alert('Please enter a valid start date');
+            return false;
+        }
+        if (isNaN(deadlineDate.getTime())) {
+            alert('Please enter a valid deadline date');
+            return false;
+        }
+        if (deadlineDate < startDate) {
+            alert('Deadline date cannot be earlier than start date');
+            return false;
+        }
+        if ($scope.task.taskId === 0 && startDate < now) {
+            alert('Start date cannot be in the past for new tasks');
+            return false;
+        }
+
         return true;
     };
 
@@ -119,9 +141,11 @@ app.controller('taskController', function ($scope, $http) {
             taskId: $scope.task.taskId,
             title: $scope.task.title.trim(),
             description: $scope.task.description?.trim() || '',
-            isCompleted: $scope.task.isCompleted || false,
+            status: $scope.task.taskId === 0 ? 0 : $scope.task.status, // Default to NotStarted for new tasks
             assignedEmployeeId: parseInt($scope.task.assignedEmployeeId),
-            reviewerId: parseInt($scope.task.reviewerId)
+            reviewerId: parseInt($scope.task.reviewerId),
+            startDate: new Date($scope.task.startDate).toISOString(),
+            deadlineDate: new Date($scope.task.deadlineDate).toISOString()
         };
 
         console.log('Sending task data:', taskData);
@@ -166,20 +190,18 @@ app.controller('taskController', function ($scope, $http) {
     };
 
     $scope.editTask = function (task) {
-        console.log('Editing task:', task); // Debug log
         $scope.task = {
             taskId: task.taskId,
             title: task.title,
             description: task.description || '',
-            isCompleted: task.isCompleted,
-            assignedEmployeeId: task.assignedEmployeeId.toString(), // Changed from task.assignedEmployee.id
-            reviewerId: task.reviewerId.toString()  // Changed from task.reviewer.id
+            status: task.status,
+            assignedEmployeeId: task.assignedEmployeeId.toString(),
+            reviewerId: task.reviewerId.toString(),
+            startDate: new Date(task.startDate),
+            deadlineDate: new Date(task.deadlineDate)
         };
         $scope.formTitle = "Edit Task";
         $scope.buttonText = "Update Task";
-
-        // Open modal if you're using Bootstrap modal
-        $('#taskModal').modal('show');
     };
 
     $scope.deleteTask = function (taskId) {
@@ -265,15 +287,15 @@ app.controller('taskController', function ($scope, $http) {
             });
     };
 
-    $scope.getStatusText = function (status) {
-        switch (parseInt(status)) {
-            case 0: return 'Not Started';
-            case 1: return 'Working';
-            case 2: return 'Pending';
-            case 3: return 'Completed';
-            default: return 'Unknown';
-        }
-    };
+    //$scope.getStatusText = function (status) {
+    //    switch (parseInt(status)) {
+    //        case 0: return 'Not Started';
+    //        case 1: return 'Working';
+    //        case 2: return 'Pending';
+    //        case 3: return 'Completed';
+    //        default: return 'Unknown';
+    //    }
+    //};
 
     $scope.getDaysInStatus = function (task) {
         if (!task?.statusChangeDate) return 0;
@@ -289,6 +311,84 @@ app.controller('taskController', function ($scope, $http) {
             console.error('Error calculating days in status:', e);
             return 0;
         }
+    };
+    $scope.getTaskProgress = function (task) {
+        if (!task.startDate || !task.deadlineDate) return 0;
+
+        var start = new Date(task.startDate);
+        var end = new Date(task.deadlineDate);
+        var current = new Date();
+
+        // If task is completed, return 100%
+        if (task.status === 3) return 100;
+
+        // Calculate progress based on time elapsed
+        var totalDuration = end - start;
+        var elapsed = current - start;
+        var progress = (elapsed / totalDuration) * 100;
+
+        // Constrain progress between 0 and 100
+        return Math.min(Math.max(Math.round(progress), 0), 100);
+    };
+
+    $scope.getTimeElapsed = function (task) {
+        var start = new Date(task.startDate);
+        var end = new Date(task.deadlineDate);
+        var now = new Date();
+
+        if (task.status === 3) { // If completed
+            return 100;
+        }
+
+        // Calculate percentage of time elapsed
+        var totalDuration = end - start;
+        var elapsed = now - start;
+        var percentage = Math.min(Math.round((elapsed / totalDuration) * 100), 100);
+
+        return Math.max(0, percentage); // Ensure we don't return negative values
+    };
+
+    $scope.getTimeRemaining = function (task) {
+        if (!task.deadlineDate) return 'No deadline';
+
+        var deadline = new Date(task.deadlineDate);
+        var current = new Date();
+        var diff = deadline - current;
+
+        if (diff < 0) return 'Overdue';
+
+        var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+        if (days > 0) {
+            return days + ' day' + (days === 1 ? '' : 's') + ' left';
+        } else if (hours > 0) {
+            return hours + ' hour' + (hours === 1 ? '' : 's') + ' left';
+        } else {
+            return 'Due soon';
+        }
+    };
+
+    $scope.sendReminder = function (task) {
+        $http.post(`/api/Tasks/${task.taskId}/send-reminder`)
+            .then(function (response) {
+                alert('Reminder sent successfully!');
+            })
+            .catch(function (error) {
+                console.error('Error sending reminder:', error);
+                alert('Error sending reminder. Please try again.');
+            });
+    };
+
+
+    // Helper function to format the date string
+    $scope.formatDate = function (dateString) {
+        if (!dateString) return '';
+        var date = new Date(dateString);
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     };
 
 

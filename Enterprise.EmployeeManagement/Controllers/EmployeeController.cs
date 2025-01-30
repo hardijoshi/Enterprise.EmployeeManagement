@@ -6,10 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
 using Enterprise.EmployeeManagement.DAL.Models;
 using Enterprise.EmployeeManagement.DAL.Repositories;
 using Enterprise.EmployeeManagement.core.Utilities;
+using Enterprise.EmployeeManagement.DAL.Services;
 
 namespace Enterprise.EmployeeManagement.Web.Controllers
 {
@@ -17,23 +17,19 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
     public class EmployeeController : Controller
     {
         private readonly IEmployeeRepository _employeeRepository;
-        private readonly ITaskRepository _taskRepository;
-        private readonly IConnectionMultiplexer _redisConnection;
+        private readonly IEmployeeCacheService _employeeCacheService;
         private readonly ILogger<EmployeeController> _logger;
 
         public EmployeeController(
             IEmployeeRepository employeeRepository,
-            ITaskRepository taskRepository,
-            ILogger<EmployeeController> logger,
-            IConnectionMultiplexer redisConnection)
+            IEmployeeCacheService employeeCacheService,
+            ILogger<EmployeeController> logger)
         {
             _employeeRepository = employeeRepository;
-            _taskRepository = taskRepository;
+            _employeeCacheService = employeeCacheService;
             _logger = logger;
-            _redisConnection = redisConnection;
         }
 
-        // INDEX
         public IActionResult Index()
         {
             var userEmail = HttpContext.Session.GetString("UserEmail");
@@ -47,100 +43,52 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
             return View();
         }
 
-        // GET ALL EMPLOYEES
         [HttpGet]
         [Route("api/employees")]
         public async Task<IActionResult> GetEmployees()
         {
-            var redisDb = _redisConnection.GetDatabase();
-            const string redisSetKey = "employee_ids";
-
             try
             {
-                var employeeIds = await redisDb.SetMembersAsync(redisSetKey);
+                var cachedEmployees = await _employeeCacheService.GetAllEmployeesAsync();
 
-                if (employeeIds.Length > 0)
+                if (cachedEmployees.Any())
                 {
                     _logger.LogInformation("Fetching employees from Redis cache.");
-                    var employees = new List<Employee>();
-
-                    foreach (var id in employeeIds)
-                    {
-                        var employeeHash = await redisDb.HashGetAllAsync($"employee:{id}");
-                        if (employeeHash.Length > 0)
-                        {
-                            var employee = new Employee
-                            {
-                                Id = (int)employeeHash.FirstOrDefault(x => x.Name == "Id").Value,
-                                FirstName = employeeHash.FirstOrDefault(x => x.Name == "First Name").Value.ToString(),
-                                LastName = employeeHash.FirstOrDefault(x => x.Name == "Last Name").Value.ToString(),
-                                Email = employeeHash.FirstOrDefault(x => x.Name == "Email").Value.ToString(),
-                                MobileNumber = employeeHash.FirstOrDefault(x => x.Name == "Mobile Number").Value.ToString(),
-                                Password = employeeHash.FirstOrDefault(x => x.Name == "Password").Value.ToString(),
-                                Role = (RoleType)Enum.Parse(typeof(RoleType), employeeHash.FirstOrDefault(x => x.Name == "Role").Value.ToString())
-                            };
-                            employees.Add(employee);
-                        }
-                    }
-
-                    return Ok(employees);
+                    return Ok(cachedEmployees);
                 }
 
-                // Fetch employees from the database
+                _logger.LogInformation("Fetching employees from database.");
                 var employeesFromDb = await _employeeRepository.GetAllEmployeesAsync();
 
-                foreach (var employee in employeesFromDb)
+                if (employeesFromDb.Any())
                 {
-                    var hashEntries = new HashEntry[]
+                    // Cache each employee
+                    foreach (var employee in employeesFromDb)
                     {
-                        new HashEntry("Id", employee.Id),
-                        new HashEntry("First Name", employee.FirstName ?? string.Empty),
-                        new HashEntry("Last Name", employee.LastName ?? string.Empty),
-                        new HashEntry("Email", employee.Email ?? string.Empty),
-                        new HashEntry("Mobile Number", employee.MobileNumber ?? string.Empty),
-                        new HashEntry("Password", employee.Password ?? string.Empty),
-                        new HashEntry("Role", employee.Role.ToString()),
-                    };
-
-                    await redisDb.HashSetAsync($"employee:{employee.Id}", hashEntries);
-                    await redisDb.SetAddAsync(redisSetKey, employee.Id);
+                        await _employeeCacheService.SetEmployeeAsync(employee);
+                    }
                 }
 
                 return Ok(employeesFromDb);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while fetching all employees.");
+                _logger.LogError(ex, "Error fetching employees.");
                 return StatusCode(500, new { error = "An error occurred while fetching employees." });
             }
         }
 
-        // GET EMPLOYEE DETAILS
         [HttpGet]
         [Route("Employee/GetDetails/{id}")]
         public async Task<IActionResult> GetDetails(int id)
         {
-            var redisDb = _redisConnection.GetDatabase();
-            string cacheKey = $"employee:{id}";
-
             try
             {
-                var employeeHash = await redisDb.HashGetAllAsync(cacheKey);
+                var cachedEmployee = await _employeeCacheService.GetEmployeeAsync(id);
 
-                if (employeeHash.Length > 0)
+                if (cachedEmployee != null)
                 {
-                    var employee = new Employee
-                    {
-                        Id = (int)employeeHash.FirstOrDefault(x => x.Name == "Id").Value,
-                        FirstName = employeeHash.FirstOrDefault(x => x.Name == "First Name").Value.ToString(),
-                        LastName = employeeHash.FirstOrDefault(x => x.Name == "Last Name").Value.ToString(),
-                        Email = employeeHash.FirstOrDefault(x => x.Name == "Email").Value.ToString(),
-                        MobileNumber = employeeHash.FirstOrDefault(x => x.Name == "Mobile Number").Value.ToString(),
-                        Password = employeeHash.FirstOrDefault(x => x.Name == "Password").Value.ToString(),
-                        Role = (RoleType)Enum.Parse(typeof(RoleType), employeeHash.FirstOrDefault(x => x.Name == "Role").Value.ToString())
-                    };
-
-                    return Ok(employee);
+                    return Ok(cachedEmployee);
                 }
 
                 var employeeFromDb = await _employeeRepository.GetEmployeeByIdAsync(id);
@@ -151,18 +99,7 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
                     return NotFound(new { message = "Employee not found." });
                 }
 
-                var hashEntries = new HashEntry[]
-                {
-                    new HashEntry("Id", employeeFromDb.Id),
-                    new HashEntry("First Name", employeeFromDb.FirstName ?? string.Empty),
-                    new HashEntry("Last Name", employeeFromDb.LastName ?? string.Empty),
-                    new HashEntry("Email", employeeFromDb.Email ?? string.Empty),
-                    new HashEntry("Mobile Number", employeeFromDb.MobileNumber ?? string.Empty),
-                    new HashEntry("Password", employeeFromDb.Password ?? string.Empty),
-                    new HashEntry("Role", employeeFromDb.Role.ToString()),
-                };
-
-                await redisDb.HashSetAsync(cacheKey, hashEntries);
+                await _employeeCacheService.SetEmployeeAsync(employeeFromDb);
 
                 return Ok(employeeFromDb);
             }
@@ -173,7 +110,6 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
             }
         }
 
-        // CREATE EMPLOYEE
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] Employee employee)
@@ -192,9 +128,7 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
                 }
 
                 await _employeeRepository.CreateEmployeeAsync(employee);
-
-                var redisDb = _redisConnection.GetDatabase();
-                await redisDb.KeyDeleteAsync("employee_ids");
+                await _employeeCacheService.SetEmployeeAsync(employee);
 
                 return Ok(new { success = true, message = "Employee created successfully." });
             }
@@ -205,7 +139,6 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
             }
         }
 
-        // UPDATE EMPLOYEE
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Update([FromBody] Employee employee)
@@ -218,40 +151,23 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
 
             try
             {
-                // Check if the employee exists in the database
                 var existingEmployee = await _employeeRepository.GetEmployeeByIdAsync(employee.Id);
                 if (existingEmployee == null)
                 {
                     return NotFound(new { success = false, message = $"Employee with ID {employee.Id} not found." });
                 }
 
-                // Update password if provided (hash it)
                 if (!string.IsNullOrEmpty(employee.Password))
                 {
                     employee.Password = PasswordHasher.HashPassword(employee.Password);
                 }
                 else
                 {
-                    // Keep the old password if none is provided
                     employee.Password = existingEmployee.Password;
                 }
 
-                // Update the employee in the database
                 await _employeeRepository.UpdateEmployeeAsync(employee);
-
-                // Update employee details in Redis cache
-                var redisDb = _redisConnection.GetDatabase();
-                var hashEntries = new HashEntry[]
-                {
-                    new HashEntry("Id", employee.Id),
-                    new HashEntry("First Name", employee.FirstName ?? string.Empty),
-                    new HashEntry("Last Name", employee.LastName ?? string.Empty),
-                    new HashEntry("Email", employee.Email ?? string.Empty),
-                    new HashEntry("Mobile Number", employee.MobileNumber ?? string.Empty),
-                    new HashEntry("Password", employee.Password ?? string.Empty),
-                    new HashEntry("Role", employee.Role.ToString())
-                };
-                await redisDb.HashSetAsync($"employee:{employee.Id}", hashEntries);
+                await _employeeCacheService.SetEmployeeAsync(employee);
 
                 return Ok(new { success = true, message = "Employee updated successfully." });
             }
@@ -262,8 +178,6 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
             }
         }
 
-
-        // DELETE EMPLOYEE
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
@@ -281,8 +195,7 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
                     return NotFound(new { error = $"Employee with ID {id} not found." });
                 }
 
-                var redisDb = _redisConnection.GetDatabase();
-                await redisDb.KeyDeleteAsync($"employee:{id}");
+                await _employeeCacheService.RemoveEmployeeAsync(id);
 
                 return Ok(new { message = "Employee deleted successfully." });
             }

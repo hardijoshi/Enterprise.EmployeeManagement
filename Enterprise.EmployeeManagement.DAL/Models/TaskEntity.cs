@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Enterprise.EmployeeManagement.DAL.Models;
 using Enterprise.EmployeeManagement.DAL.DTO;
+using System;
 public enum TaskStatus
 {
     NotStarted = 0,
@@ -33,6 +34,13 @@ public class TaskEntity
     [Required(ErrorMessage = "Reviewer is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "Reviewer Id must be a valid positive number.")]
     public int ReviewerId { get; set; }
+
+    [Required(ErrorMessage = "Start Date is required.")]
+    public DateTime StartDate { get; set; } = DateTime.UtcNow; // Default to current time
+
+    [Required(ErrorMessage = "Deadline Date is required.")]
+    public DateTime DeadlineDate { get; set; }
+
 
 
     public virtual Employee AssignedEmployee { get; set; }

@@ -27,6 +27,7 @@ namespace Enterprise.EmployeeManagement.DAL.Models
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public virtual RoleType Role { get; set; }
 
+        [IgnoreFormat]
         public virtual string RoleInString => Role.ToString();
 
         [Index(4)]

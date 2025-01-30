@@ -21,7 +21,9 @@ namespace Enterprise.EmployeeManagement.DAL.Repositories
                 AssignedEmployeeId = entity.AssignedEmployeeId,
                 ReviewerId = entity.ReviewerId,
                 AssignedEmployeeName = entity.AssignedEmployee?.FirstName,
-                ReviewerName = entity.Reviewer?.FirstName
+                ReviewerName = entity.Reviewer?.FirstName,
+                StartDate = entity.StartDate,
+                DeadlineDate = entity.DeadlineDate,
             };
         }
 
@@ -36,7 +38,9 @@ namespace Enterprise.EmployeeManagement.DAL.Repositories
                 Description = dto.Description,
                 Status = dto.Status,
                 AssignedEmployeeId = dto.AssignedEmployeeId,
-                ReviewerId = dto.ReviewerId
+                ReviewerId = dto.ReviewerId,
+                StartDate = dto.StartDate != default ? dto.StartDate : DateTime.UtcNow,
+                DeadlineDate = dto.DeadlineDate != default ? dto.DeadlineDate : DateTime.UtcNow.AddDays(7)
             };
         }
 
