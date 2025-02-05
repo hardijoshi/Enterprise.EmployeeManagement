@@ -3,46 +3,38 @@
     ViewData["Title"] = "Employee List";
 }
 
-@if (User.IsInRole("Admin"))
-{
-    <a href="javascript:void(0);" onclick="openCreateModal();" class="btn btn-primary">Create an Employee</a>
-}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary">Employee List</h2>
+        @if (User.IsInRole("Admin"))
+        {
+            <button class="btn btn-success" onclick="openCreateModal()">
+                <i class="bi bi-person-plus"></i> Create Employee
+            </button>
+        }
+    </div>
 
-<!-- Logout Button -->
-@* <a href="javascript:void(0);" onclick="logout()" class="btn btn-danger">Logout</a> *@
-
-
-
-
-
-
-<h2>Employee List</h2>
-
-<!-- Anti-forgery token to be used in JavaScript -->
-<div id="antiForgeryToken" style="display: none;">
-    @Html.AntiForgeryToken()
+    <div class="table-responsive">
+        <table id="employeeTable" class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Role</th>
+                    <th>Email</th>
+                    <th>Mobile Number</th>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <th>Actions</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data will be dynamically inserted here -->
+            </tbody>
+        </table>
+    </div>
 </div>
-
-<table id="employeeTable" style="width: 100%">
-    <thead>
-        <tr>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>Role</th>
-            <th>Email</th>
-            <th>Mobile Number</th>
-            @if (User.IsInRole("Admin"))
-            {
-                <th>Update</th>
-                <th>Delete</th>
-            }
-            @* <th>Tasks</th> *@
-        </tr>
-    </thead>
-    <tbody>
-        <!-- Data will be dynamically inserted here -->
-    </tbody>
-</table>
 
 <!-- Bootstrap Modal for Create -->
 <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
@@ -175,6 +167,9 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.css">
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/site.css">
+
 
     <script>
         // Fetch employees and populate the table
@@ -190,22 +185,19 @@
 
                 // Only add update and delete columns for admin
                 if (@Json.Serialize(User.IsInRole("Admin"))) {
-                    columns.push(
-                        {
-                            data: 'id',
-                            render: function(data) {
-                                return `<a href="javascript:void(0);" onclick="openUpdateModal(${data});">Update</a>`;
-                            }
-                        },
-                        {
-                                data: 'id',
-                                render: function(data) {
-                                    return `
-                                        <button class="btn btn-danger" onclick="deleteEmployee(${data});">Delete</button>
-                                    `;
-                                }
+                    columns.push({
+                        data: 'id',
+                        className: 'text-center',
+                        render: function(data) {
+                           return `
+                                    <button class="btn btn-warning btn-sm" onclick="openUpdateModal(${data})">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="deleteEmployee(${data})">
+                                        <i class="bi bi-trash"></i>
+                                    </button>`;
                         }
-                    );
+                    });
                 }
 
                 // Add tasks column for all users
@@ -418,19 +410,6 @@
             });
         });
 
-        // function logout() {
-        //     $.ajax({
-        //         url: '/Account/Logout', Assuming this is the logout action
-        //         type: 'POST',
-        //         success: function(response) {
-        //             Redirect to the login page after successful logout
-        //             window.location.href = '/Account/Login'; Adjust according to your login page URL
-        //         },
-        //         error: function(error) {
-        //             alert('Error logging out');
-        //         }
-        //     });
-        // }
 
     </script>
 }

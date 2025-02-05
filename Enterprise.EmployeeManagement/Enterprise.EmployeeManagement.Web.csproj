@@ -21,7 +21,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Enterprise.EmployeeManagement.core\Enterprise.EmployeeManagement.core.csproj" />
-    <ProjectReference Include="..\Enterprise.EmployeeManagement.DAL\Enterprise.EmployeeManagement.DAL.csproj" />
   </ItemGroup>
 
   <ItemGroup>

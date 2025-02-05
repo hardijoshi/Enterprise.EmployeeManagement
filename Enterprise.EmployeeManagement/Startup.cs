@@ -10,9 +10,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Enterprise.EmployeeManagement.core.MailService;
-
+using Enterprise.EmployeeManagement.core.Interfaces;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using Enterprise.EmployeeManagement.DAL.Context;
+using Enterprise.EmployeeManagement.core.Services;
 using Pomelo.EntityFrameworkCore.MySql.Storage;
 using Enterprise.EmployeeManagement.DAL.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -22,6 +23,7 @@ using NLog.Web;
 using NLog.Extensions.Logging;
 using Enterprise.EmployeeManagement.DAL.Services;
 using StackExchange.Redis;
+
 
 
 
@@ -62,6 +64,7 @@ namespace Enterprise.EmployeeManagement.Web
             services.AddScoped<IEmployeeMapper, EmployeeMapper>();
             services.AddScoped<IEmployeeService, EmployeeService>();
             services.AddScoped<IEmailService, EmailService>();
+            
 
             services.AddDistributedMemoryCache();
             services.AddSession(options =>

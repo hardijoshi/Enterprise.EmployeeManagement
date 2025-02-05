@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Enterprise.EmployeeManagement.DAL.DTO;
 using Enterprise.EmployeeManagement.DAL.Models;
+using Enterprise.EmployeeManagement.DAL.Repositories;
 
 namespace Enterprise.EmployeeManagement.DAL.Repositories
 {

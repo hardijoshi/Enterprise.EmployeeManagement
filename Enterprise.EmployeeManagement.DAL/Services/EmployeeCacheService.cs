@@ -6,6 +6,7 @@ using Enterprise.EmployeeManagement.DAL.Models;
 using Enterprise.EmployeeManagement.DAL.DTO;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
+using Enterprise.EmployeeManagement.DAL.Services;
 using ZeroFormatter;
 
 namespace Enterprise.EmployeeManagement.DAL.Services

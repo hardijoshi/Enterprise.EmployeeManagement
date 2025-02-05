@@ -107,6 +107,7 @@
     #employeeTable td {
         padding: 12px 15px;
         text-align: left;
+        vertical-align: middle;
     }
 
     #employeeTable th {
@@ -285,5 +286,67 @@
     color: white;
     font-size: 12px;
     transition: width 0.6s ease;
+}
+/* Action Buttons Container */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Individual Action Buttons */
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    min-width: 32px;
+    height: 32px;
+}
+
+/* Update Button Styling */
+.btn-action.btn-update {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.btn-action.btn-update:hover {
+    background-color: #e0a800;
+    transform: translateY(-1px);
+}
+
+/* Delete Button Styling */
+.btn-action.btn-delete {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+.btn-action.btn-delete:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+/* Icon Styling within buttons */
+.btn-action i {
+    font-size: 16px;
+}
+
+/* Ensure icons are centered */
+.bi {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+/* Add shadow for better visibility */
+.btn-action {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 

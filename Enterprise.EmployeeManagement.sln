@@ -6,11 +6,11 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Enterprise.EmployeeManagement.Web", "Enterprise.EmployeeManagement\Enterprise.EmployeeManagement.Web.csproj", "{C1EB606C-D50D-44FB-9262-BE43FB72743A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Enterprise.EmployeeManagement.core", "Enterprise.EmployeeManagement.core\Enterprise.EmployeeManagement.core.csproj", "{90DD36C9-EFE3-4D33-9E5B-1C0340F87FD2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7DFF999C-478A-4CE1-BFE9-B6BAE7DED437} = {7DFF999C-478A-4CE1-BFE9-B6BAE7DED437}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Enterprise.EmployeeManagement.DAL", "Enterprise.EmployeeManagement.DAL\Enterprise.EmployeeManagement.DAL.csproj", "{7DFF999C-478A-4CE1-BFE9-B6BAE7DED437}"
-	ProjectSection(ProjectDependencies) = postProject
-		{90DD36C9-EFE3-4D33-9E5B-1C0340F87FD2} = {90DD36C9-EFE3-4D33-9E5B-1C0340F87FD2}
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

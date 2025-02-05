@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Enterprise.EmployeeManagement.DAL.DTO;
 using Enterprise.EmployeeManagement.DAL.Models;
 using Enterprise.EmployeeManagement.DAL.Repositories;
+using Enterprise.EmployeeManagement.core.Interfaces;
 using System.Threading.Tasks;
+using Enterprise.EmployeeManagement.DAL.DTO;
 using System.Linq;
 
-namespace Enterprise.EmployeeManagement.DAL.Services
+namespace Enterprise.EmployeeManagement.core.Services
 {
     public class EmployeeService : IEmployeeService
     {

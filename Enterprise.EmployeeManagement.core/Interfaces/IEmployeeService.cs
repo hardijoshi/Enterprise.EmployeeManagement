@@ -4,7 +4,7 @@ using System.Text;
 using Enterprise.EmployeeManagement.DAL.DTO;
 using System.Threading.Tasks;
 
-namespace Enterprise.EmployeeManagement.DAL.Services
+namespace Enterprise.EmployeeManagement.core.Interfaces
 {
     public interface IEmployeeService
     {

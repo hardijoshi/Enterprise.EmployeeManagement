@@ -9,6 +9,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using Enterprise.EmployeeManagement.core.MailService;
 using System.Threading.Tasks;
+using Enterprise.EmployeeManagement.core.Interfaces;
 
 [ApiController]
 [Route("api/[controller]")]

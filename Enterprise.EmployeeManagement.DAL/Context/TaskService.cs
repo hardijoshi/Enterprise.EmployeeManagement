@@ -5,8 +5,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Enterprise.EmployeeManagement.DAL.DTO;
 using Enterprise.EmployeeManagement.DAL.Repositories;
+using Enterprise.EmployeeManagement.core.Interfaces;
 
-namespace Enterprise.EmployeeManagement.DAL.Services
+
+namespace Enterprise.EmployeeManagement.core.Services
 {
     public class TaskService : ITaskService
     {
