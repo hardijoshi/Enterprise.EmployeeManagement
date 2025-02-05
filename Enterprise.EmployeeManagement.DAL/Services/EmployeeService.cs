@@ -34,6 +34,11 @@ namespace Enterprise.EmployeeManagement.DAL.Services
 
         public async Task CreateEmployeeAsync(EmployeeDTO employeeDto)
         {
+            if (await _employeeRepository.IsEmailExistsAsync(employeeDto.Email))
+            {
+                throw new Exception("An employee with the same email already exists.");
+            }
+
             var employee = _employeeMapper.MapToEntity(employeeDto);
             await _employeeRepository.CreateEmployeeAsync(employee);
         }
@@ -46,7 +51,11 @@ namespace Enterprise.EmployeeManagement.DAL.Services
                 throw new Exception($"Employee with ID {id} not found.");
             }
 
-            // Update the existing employee with new values
+            if (existingEmployee.Email != employeeDto.Email && await _employeeRepository.IsEmailExistsAsync(employeeDto.Email))
+            {
+                throw new Exception("An employee with the same email already exists.");
+            }
+
             existingEmployee = _employeeMapper.MapToEntity(employeeDto);
             await _employeeRepository.UpdateEmployeeAsync(existingEmployee);
         }

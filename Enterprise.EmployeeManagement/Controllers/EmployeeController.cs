@@ -122,6 +122,11 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
 
             try
             {
+                if (await _employeeRepository.IsEmailExistsAsync(employee.Email))
+                {
+                    return BadRequest(new { success = false, message = "An employee with the same email already exists." });
+                }
+
                 if (!string.IsNullOrEmpty(employee.Password))
                 {
                     employee.Password = PasswordHasher.HashPassword(employee.Password);
@@ -157,6 +162,11 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
                     return NotFound(new { success = false, message = $"Employee with ID {employee.Id} not found." });
                 }
 
+                if (existingEmployee.Email != employee.Email && await _employeeRepository.IsEmailExistsAsync(employee.Email))
+                {
+                    return BadRequest(new { success = false, message = "An employee with the same email already exists." });
+                }
+
                 if (!string.IsNullOrEmpty(employee.Password))
                 {
                     employee.Password = PasswordHasher.HashPassword(employee.Password);
@@ -177,6 +187,7 @@ namespace Enterprise.EmployeeManagement.Web.Controllers
                 return StatusCode(500, new { error = "An error occurred while updating the employee." });
             }
         }
+
 
         [HttpPost]
         public async Task<IActionResult> Delete(int id)

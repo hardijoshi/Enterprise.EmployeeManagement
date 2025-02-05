@@ -97,6 +97,10 @@ namespace Enterprise.EmployeeManagement.DAL.Repositories
 
             return $"{employee.FirstName} {employee.LastName}";
         }
+        public async Task<bool> IsEmailExistsAsync(string email)
+        {
+            return await _context.Employees.AnyAsync(e => e.Email == email);
+        }
 
 
     }

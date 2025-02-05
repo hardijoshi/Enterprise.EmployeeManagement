@@ -1,23 +1,40 @@
 ﻿@model Enterprise.EmployeeManagement.DAL.Models.Login
 
-<div class="login-container">
-    <h2 class="form-title">Login</h2>
-    <form asp-action="Login" method="post" class="login-form">
-        <p>
-            <label asp-for="Email"></label>
-            <input asp-for="Email" type="text" placeholder="Enter your email" />
-            <span asp-validation-for="Email"></span>
-        </p>
-        <p>
-            <label asp-for="Password"></label>
-            <input asp-for="Password" type="password" placeholder="Enter your password" />
-            <span asp-validation-for="Password"></span>
-        </p>
-        <p class="full-row">
-            <button type="submit">Login</button>
-        </p>
-    </form>
-    <div class="validation-summary">
-        @Html.ValidationSummary()
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+
+    <!-- Reference the site.css from wwwroot/css -->
+    <link href="~/css/site.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <div class="login-container">
+        <h2 class="form-title">Login</h2>
+        <form asp-action="Login" method="post" class="login-form">
+            <p>
+                <label asp-for="Email"></label>
+                <input asp-for="Email" type="text" placeholder="Enter your email" />
+                <span asp-validation-for="Email"></span>
+            </p>
+            <p>
+                <label asp-for="Password"></label>
+                <input asp-for="Password" type="password" placeholder="Enter your password" />
+                <span asp-validation-for="Password"></span>
+            </p>
+            <p class="full-row">
+                <button type="submit">Login</button>
+            </p>
+        </form>
+        <div class="validation-summary">
+            @Html.ValidationSummary()
+        </div>
     </div>
-</div>
+</body>
+</html>

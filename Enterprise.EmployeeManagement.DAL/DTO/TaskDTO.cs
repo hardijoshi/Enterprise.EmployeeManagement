@@ -24,8 +24,16 @@ namespace Enterprise.EmployeeManagement.DAL.DTO
         [Required(ErrorMessage = "Deadline Date is required")]
         public DateTime DeadlineDate { get; set; }
 
-        public int DaysUntilDeadline => (DeadlineDate - DateTime.UtcNow).Days;
-        public int DaysSinceStart => (DateTime.UtcNow - StartDate).Days;
+        public void SetDates(DateTime start, DateTime end)
+        {
+            StartDate = DateTime.SpecifyKind(start, DateTimeKind.Local);
+            DeadlineDate = DateTime.SpecifyKind(end, DateTimeKind.Local);
+        }
+
+        private DateTime AdjustToLocalTime(DateTime date)
+        {
+            return DateTime.SpecifyKind(date, DateTimeKind.Local);
+        }
         public decimal CompletionPercentage =>
     Status == TaskStatus.Completed ? 100m :
     Status == TaskStatus.NotStarted ? 0m :
@@ -34,7 +42,8 @@ namespace Enterprise.EmployeeManagement.DAL.DTO
         (decimal)(DateTime.UtcNow - StartDate).TotalDays /
         (decimal)(DeadlineDate - StartDate).TotalDays * 100m));
 
-        public bool IsOverdue => DateTime.UtcNow > DeadlineDate && Status != TaskStatus.Completed;
+        public bool IsOverdue => DateTime.Now > DeadlineDate && Status != TaskStatus.Completed;
+
 
         public void ValidateDates()
         {
@@ -42,23 +51,18 @@ namespace Enterprise.EmployeeManagement.DAL.DTO
             {
                 throw new ValidationException("Start date must be set");
             }
-
             if (DeadlineDate == default)
             {
                 throw new ValidationException("Deadline date must be set");
             }
 
-            if (DeadlineDate < StartDate)
+            var localStartDate = AdjustToLocalTime(StartDate);
+            var localDeadlineDate = AdjustToLocalTime(DeadlineDate);
+
+            if (localDeadlineDate < localStartDate)
             {
                 throw new ValidationException("Deadline date cannot be earlier than start date");
             }
-
-            // Optional: Add validation for minimum task duration if needed
-            //var minimumDuration = TimeSpan.FromHours(1);
-            //if (DeadlineDate - StartDate < minimumDuration)
-            //{
-            //    throw new ValidationException($"Task duration must be at least {minimumDuration.TotalHours} hours");
-            //}
         }
 
         public bool IsValidDateRange()

@@ -3,30 +3,38 @@
 app.filter('customDate', function () {
     return function (dateString) {
         if (!dateString) return '';
-        var date = new Date(dateString);
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+
+        const date = new Date(dateString);
+
+        // Format the date parts
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        let hours = date.getHours();
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+
+        return `${day}/${month}/${year} ${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
     };
-});  
+});
 
+app.controller('taskController', function ($scope, $http, $timeout) {
 
-app.controller('taskController', function ($scope, $http) {
-
-    $http.get('/api/user/current')  // This endpoint should return the current user's data (role, name, etc.)
+    $http.get('/api/user/current')  
         .then(function (response) {
-            // Successfully fetched user data, update the scope
+            
             $scope.currentUser = response.data;
-            console.log('Current User:', $scope.currentUser);  // For debugging purposes
+            console.log('Current User:', $scope.currentUser); 
         })
         .catch(function (error) {
             console.error('Error fetching current user:', error);
         });
 
-    $scope.successMessage = null; // Variable to store success message
+    $scope.successMessage = null; 
 
-    // This function will be used to clear the success message
+   
     $scope.clearSuccessMessage = function () {
         $scope.successMessage = null;
     };
@@ -44,10 +52,15 @@ app.controller('taskController', function ($scope, $http) {
     $scope.statusUpdateError = null;
 
     $scope.cleanupModal = function (modalId) {
+        $scope.successMessage = null;
+
         $(modalId).modal('hide');
         $('body').removeClass('modal-open');
         $('.modal-backdrop').remove();
         $('body').css('padding-right', '');
+        if (modalId === '#taskModal') {
+            $scope.resetForm();
+        }
     };
 
     $scope.prepareStatusUpdate = function (task) {
@@ -61,12 +74,13 @@ app.controller('taskController', function ($scope, $http) {
             taskId: 0,
             title: '',
             description: '',
-            isCompleted: false,
+            status: 0,
             assignedEmployeeId: '',
             reviewerId: ''
         };
         $scope.formTitle = "Add New Task";
         $scope.buttonText = "Add Task";
+        $scope.successMessage = null; // Clear success message
     };
 
     $scope.loadData = function () {
@@ -137,20 +151,30 @@ app.controller('taskController', function ($scope, $http) {
             return;
         }
 
+        const startDate = new Date($scope.task.startDate);
+        const deadlineDate = new Date($scope.task.deadlineDate);
+
+        const formatLocalDateTime = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = '00';
+            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+        };
+
         var taskData = {
             taskId: $scope.task.taskId,
             title: $scope.task.title.trim(),
             description: $scope.task.description?.trim() || '',
-            status: $scope.task.taskId === 0 ? 0 : $scope.task.status, // Default to NotStarted for new tasks
+            status: $scope.task.taskId === 0 ? 0 : $scope.task.status,
             assignedEmployeeId: parseInt($scope.task.assignedEmployeeId),
             reviewerId: parseInt($scope.task.reviewerId),
-            startDate: new Date($scope.task.startDate).toISOString(),
-            deadlineDate: new Date($scope.task.deadlineDate).toISOString()
+            startDate: formatLocalDateTime(startDate),
+            deadlineDate: formatLocalDateTime(deadlineDate)
         };
 
-        console.log('Sending task data:', taskData);
-
-        // Choose POST or PUT based on taskId
         const isNewTask = taskData.taskId === 0;
         const method = isNewTask ? 'POST' : 'PUT';
         const url = isNewTask ? '/api/Tasks' : `/api/Tasks/${taskData.taskId}`;
@@ -158,38 +182,55 @@ app.controller('taskController', function ($scope, $http) {
         $http({
             method: method,
             url: url,
-            data: taskData
-        })
-            .then(function (response) {
-                console.log('Save response:', response);
-                $scope.loadTasks();
-                $scope.successMessage = 'Task created successfully!';
+            data: taskData,
+            headers: {
+                'X-TimeZone-Offset': new Date().getTimezoneOffset()
+            }
+        }).then(function (response) {
+            console.log('Save response:', response);
+            $scope.loadTasks();
 
-                // Close the modal after a short delay
-                setTimeout(function () {
-                    $scope.cleanupModal('#taskModal');
-                }, 1500);
+          
+            $scope.successMessage = isNewTask ? 'Task created successfully!' : 'Task updated successfully!';
 
-                $scope.resetForm();
-                //alert('Task saved successfully!');
-            })
-            .catch(function (error) {
-                console.error('Error saving task:', error);
-                let errorMessage = 'Error saving task: ';
-                if (error.data && error.data.errors) {
-                    errorMessage += Object.values(error.data.errors).join(', ');
-                } else if (error.data && error.data.title) {
-                    errorMessage += error.data.title;
-                } else if (error.data) {
-                    errorMessage += error.data;
-                } else {
-                    errorMessage += 'Please try again.';
-                }
-                alert(errorMessage);
-            });
+         
+            $timeout(function () {
+                $scope.cleanupModal('#taskModal');
+            }, 1500);
+
+            $scope.resetForm();
+        }).catch(function (error) {
+            console.error('Error saving task:', error);
+            let errorMessage = 'Error saving task: ';
+            if (error.data && error.data.errors) {
+                errorMessage += Object.values(error.data.errors).join(', ');
+            } else if (error.data && error.data.title) {
+                errorMessage += error.data.title;
+            } else if (error.data) {
+                errorMessage += error.data;
+            } else {
+                errorMessage += 'Please try again.';
+            }
+            alert(errorMessage);
+        });
+    };
+
+    $scope.formatDateForInput = function (dateString) {
+        if (!dateString) return '';
+
+        // Create a new date object and handle timezone offset
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '';
+
+        return date.toISOString().slice(0, 16);
     };
 
     $scope.editTask = function (task) {
+        
+        $scope.successMessage = null; 
+        const startDate = new Date(task.startDate);
+        const deadlineDate = new Date(task.deadlineDate);
+
         $scope.task = {
             taskId: task.taskId,
             title: task.title,
@@ -197,9 +238,10 @@ app.controller('taskController', function ($scope, $http) {
             status: task.status,
             assignedEmployeeId: task.assignedEmployeeId.toString(),
             reviewerId: task.reviewerId.toString(),
-            startDate: new Date(task.startDate),
-            deadlineDate: new Date(task.deadlineDate)
+            startDate: $scope.formatDateForInput(startDate),
+            deadlineDate: $scope.formatDateForInput(deadlineDate)
         };
+
         $scope.formTitle = "Edit Task";
         $scope.buttonText = "Update Task";
     };
@@ -217,14 +259,7 @@ app.controller('taskController', function ($scope, $http) {
                 });
         }
     };
-    //$scope.updateTaskStatus = function (task) {
-    //    // Example logic: Toggle the task's completion status
-    //    task.isCompleted = !task.isCompleted;
-
-    //    // Simulate a backend call (replace this with actual API call)
-    //    console.log(`Task ${task.title} status updated to: ${task.isCompleted ? 'Completed' : 'Pending'}`);
-    //};
-
+    
     $scope.getStatusText = function (status) {
         switch (parseInt(status)) {
             case 0:
@@ -265,6 +300,13 @@ app.controller('taskController', function ($scope, $http) {
 
         console.log('Updating status for task:', $scope.selectedTask);
         console.log('New status:', $scope.newStatus);
+        if ($scope.selectedTask && $scope.newStatus === 3) {
+            if (!$scope.selectedTask.completedDate) {
+                $scope.selectedTask.completedDate = new Date().toISOString(); // Store full timestamp
+            }
+        } else {
+            $scope.selectedTask.completedDate = null; // Reset if status changes back
+        }
 
         $http.patch(`/api/tasks/${$scope.selectedTask.taskId}/status`, $scope.newStatus)
             .then(function (response) {
@@ -345,29 +387,30 @@ app.controller('taskController', function ($scope, $http) {
         var elapsed = now - start;
         var percentage = Math.min(Math.round((elapsed / totalDuration) * 100), 100);
 
-        return Math.max(0, percentage); // Ensure we don't return negative values
+        return Math.max(0, percentage);
     };
 
     $scope.getTimeRemaining = function (task) {
-        if (!task.deadlineDate) return 'No deadline';
+        const now = new Date();
+        const dueDate = new Date(task.deadlineDate);
+        const completionDate = task.completedDate ? new Date(task.completedDate) : null;
 
-        var deadline = new Date(task.deadlineDate);
-        var current = new Date();
-        var diff = deadline - current;
-
-        if (diff < 0) return 'Overdue';
-
-        var days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
-        if (days > 0) {
-            return days + ' day' + (days === 1 ? '' : 's') + ' left';
-        } else if (hours > 0) {
-            return hours + ' hour' + (hours === 1 ? '' : 's') + ' left';
-        } else {
-            return 'Due soon';
+        if (task.status === 3) {
+            return completionDate && completionDate > dueDate ? "Completed Late" : "Completed On Time";
         }
+
+        if (now > dueDate) return "Overdue";
+
+        const timeDiff = dueDate - now;
+        const hoursRemaining = Math.floor(timeDiff / (1000 * 60 * 60));
+        const minutesRemaining = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+        return `${hoursRemaining}h ${minutesRemaining}m left`;
     };
+
+
+
+
 
     $scope.sendReminder = function (task) {
         $http.post(`/api/Tasks/${task.taskId}/send-reminder`)
@@ -376,20 +419,29 @@ app.controller('taskController', function ($scope, $http) {
             })
             .catch(function (error) {
                 console.error('Error sending reminder:', error);
-                alert('Error sending reminder. Please try again.');
+                const message = error.data?.data || 'Error sending reminder. Please try again.';
+                alert(message);
             });
     };
+
 
 
     // Helper function to format the date string
     $scope.formatDate = function (dateString) {
         if (!dateString) return '';
         var date = new Date(dateString);
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+
+        // Convert 24-hour to 12-hour format
+        let hours = date.getHours();
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // Convert 0 to 12
+        hours = String(hours).padStart(2, '0');
+
+        return `${date.toLocaleDateString()} ${hours}:${minutes} ${ampm}`;
     };
+
 
 
     // Initialize the page

@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using Enterprise.EmployeeManagement.core.MailService;
 using System.Threading.Tasks;
 
 [ApiController]
@@ -87,16 +88,9 @@ public class TasksController : ControllerBase
 
         try
         {
-            // Set default dates if not provided
-            if (taskDto.StartDate == default)
-            {
-                taskDto.StartDate = DateTime.UtcNow;
-            }
-
-            if (taskDto.DeadlineDate == default)
-            {
-                taskDto.DeadlineDate = taskDto.StartDate.AddDays(7); // Default 7-day deadline
-            }
+            // Convert incoming dates to local time
+            taskDto.StartDate = DateTime.Parse(taskDto.StartDate.ToString("yyyy-MM-ddTHH:mm:ss"));
+            taskDto.DeadlineDate = DateTime.Parse(taskDto.DeadlineDate.ToString("yyyy-MM-ddTHH:mm:ss"));
 
             // Validate dates
             try
@@ -109,13 +103,7 @@ public class TasksController : ControllerBase
             }
 
             var createdTask = await _taskService.CreateAsync(taskDto);
-            _logger.LogInformation("Task successfully added with ID {taskId}", createdTask.TaskId);
             return CreatedAtAction(nameof(GetTask), new { id = createdTask.TaskId }, createdTask);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            _logger.LogWarning(ex, "Invalid employee reference in task creation");
-            return BadRequest("Invalid AssignedEmployeeId or ReviewerId");
         }
         catch (Exception ex)
         {
@@ -243,9 +231,8 @@ public class TasksController : ControllerBase
         }
     }
 
-   
+
     [HttpPost("{id}/send-reminder")]
-    [Authorize(Roles = "Manager, Admin")]
     public async Task<IActionResult> SendReminder(int id)
     {
         try
@@ -256,12 +243,15 @@ public class TasksController : ControllerBase
                 return NotFound();
             }
 
-            if (task.DeadlineDate > DateTime.UtcNow)
+            // More flexible overdue check with small buffer
+            var now = DateTime.UtcNow;
+            var isOverdue = task.DeadlineDate.AddMinutes(-5) < now;
+
+            if (!isOverdue)
             {
-                return BadRequest("Task is not overdue");
+                return BadRequest($"Task is not overdue. Deadline: {task.DeadlineDate}, Current Time: {now}");
             }
 
-            // Updated method name to match the service implementation
             var employee = await _employeeService.GetEmployeeByIdAsync(task.AssignedEmployeeId);
             if (employee == null)
             {

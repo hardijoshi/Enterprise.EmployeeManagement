@@ -13,5 +13,7 @@ namespace Enterprise.EmployeeManagement.DAL.Repositories
         Task<bool> DeleteEmployeeAsync(int id);
 
         Task<string> GetEmployeeNameById(int employeeId);
+        Task<bool> IsEmailExistsAsync(string email);
+
     }
 }

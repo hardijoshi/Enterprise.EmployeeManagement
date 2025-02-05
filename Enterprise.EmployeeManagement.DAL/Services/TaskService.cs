@@ -57,10 +57,10 @@ namespace Enterprise.EmployeeManagement.DAL.Services
             taskDto.ValidateDates();
 
             // Ensure StartDate is not in the past for new tasks
-            if (taskDto.StartDate < DateTime.UtcNow)
-            {
-                taskDto.StartDate = DateTime.UtcNow;
-            }
+            //if (taskDto.StartDate < DateTime.UtcNow)
+            //{
+            //    taskDto.StartDate = DateTime.UtcNow;
+            //}
 
             var entity = _taskMapper.MapToEntity(taskDto);
             var created = await _taskRepository.AddTaskAsync(entity);

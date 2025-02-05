@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Enterprise.EmployeeManagement.core.MailService;
 
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using Enterprise.EmployeeManagement.DAL.Context;

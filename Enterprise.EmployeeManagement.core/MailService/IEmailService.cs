@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Enterprise.EmployeeManagement.DAL.Services
+namespace Enterprise.EmployeeManagement.core.MailService
 {
     public interface IEmailService
     {
