@@ -1,31 +1,22 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Enterprise.EmployeeManagement.core.MailService;
 using Enterprise.EmployeeManagement.core.Interfaces;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using Enterprise.EmployeeManagement.DAL.Context;
 using Enterprise.EmployeeManagement.core.Services;
-using Pomelo.EntityFrameworkCore.MySql.Storage;
 using Enterprise.EmployeeManagement.DAL.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Logging;
-using NLog;
 using NLog.Web;
 using NLog.Extensions.Logging;
 using Enterprise.EmployeeManagement.DAL.Services;
 using StackExchange.Redis;
-
-
-
+using Autofac;
 
 namespace Enterprise.EmployeeManagement.Web
 {
@@ -55,16 +46,9 @@ namespace Enterprise.EmployeeManagement.Web
                 var configuration = ConfigurationOptions.Parse(Configuration["RedisCacheOptions:Configuration"], true);
                 return ConnectionMultiplexer.Connect(configuration);
             });
-            services.AddScoped<IRedisCacheService, RedisCacheService>();
-            services.AddScoped<IEmployeeCacheService, EmployeeCacheService>();
-            services.AddScoped<ITaskMapper, TaskMapper>();
-            services.AddScoped<ITaskService, TaskService>();
-            services.AddScoped<IEmployeeRepository, EmployeeRepository>();
-            services.AddScoped<ITaskRepository, TaskRepository>();
-            services.AddScoped<IEmployeeMapper, EmployeeMapper>();
-            services.AddScoped<IEmployeeService, EmployeeService>();
-            services.AddScoped<IEmailService, EmailService>();
             
+            services.AddControllers();
+
 
             services.AddDistributedMemoryCache();
             services.AddSession(options =>
@@ -88,7 +72,46 @@ namespace Enterprise.EmployeeManagement.Web
 
         }
 
-        
+        public void ConfigureContainer(ContainerBuilder builder)
+        {
+            builder.RegisterType<TaskService>()
+                   .As<ITaskService>()
+                   .InstancePerLifetimeScope();
+
+            builder.RegisterType<TaskRepository>()
+                   .As<ITaskRepository>()
+                   .InstancePerLifetimeScope();
+
+            builder.RegisterType<TaskMapper>()
+                  .As<ITaskMapper>()
+                  .InstancePerLifetimeScope();
+
+            builder.RegisterType<EmployeeService>()
+                   .As<IEmployeeService>()
+                   .InstancePerLifetimeScope();
+
+            builder.RegisterType<EmployeeRepository>()
+                   .As<IEmployeeRepository>()
+                   .InstancePerLifetimeScope();
+
+            builder.RegisterType<EmployeeMapper>()
+                   .As<IEmployeeMapper>()
+                   .InstancePerLifetimeScope();
+
+            builder.RegisterType<EmailService>()
+                   .As<IEmailService>()
+                   .InstancePerLifetimeScope();
+
+            builder.RegisterType<EmployeeCacheService>()
+                   .As<IEmployeeCacheService>()
+                   .InstancePerLifetimeScope();
+
+            builder.RegisterType<RedisCacheService>()
+                   .As<IRedisCacheService>()
+                   .InstancePerLifetimeScope();
+
+        }
+
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
             _logger = logger;
