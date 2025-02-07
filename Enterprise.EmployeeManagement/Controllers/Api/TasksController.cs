@@ -111,7 +111,7 @@ public class TasksController : ControllerBase
                 return BadRequest(response);
             }
 
-            return CreatedAtAction(nameof(GetTask), new { id = response.Data.TaskId }, response);
+            return Ok(response);
         }
         catch (ValidationException ex)
         {
