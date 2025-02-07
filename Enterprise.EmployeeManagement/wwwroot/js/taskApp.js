@@ -22,21 +22,24 @@ app.filter('customDate', function () {
 
 app.controller('taskController', function ($scope, $http, $timeout) {
 
-    $http.get('/api/user/current')  
+    $http.get('/api/user/current')
         .then(function (response) {
-            
+
             $scope.currentUser = response.data;
-            console.log('Current User:', $scope.currentUser); 
+            console.log('Current User:', $scope.currentUser);
         })
         .catch(function (error) {
             console.error('Error fetching current user:', error);
         });
 
-    $scope.successMessage = null; 
+    $scope.messages = {
+        success: null,
+        error: null
+    };
 
-   
-    $scope.clearSuccessMessage = function () {
-        $scope.successMessage = null;
+    $scope.clearMessages = function () {
+        $scope.messages.success = null;
+        $scope.messages.error = null;
     };
 
     console.log('Current User:', $scope.currentUser);
@@ -51,17 +54,18 @@ app.controller('taskController', function ($scope, $http, $timeout) {
     $scope.newStatus = null;
     $scope.statusUpdateError = null;
 
+    
     $scope.cleanupModal = function (modalId) {
-        $scope.successMessage = null;
-
         $(modalId).modal('hide');
-        $('body').removeClass('modal-open');
-        $('.modal-backdrop').remove();
-        $('body').css('padding-right', '');
-        if (modalId === '#taskModal') {
-            $scope.resetForm();
-        }
+
+        setTimeout(function () {
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open');
+        }, 500); 
     };
+
+
+
 
     $scope.prepareStatusUpdate = function (task) {
         $scope.selectedTask = task;
@@ -80,7 +84,7 @@ app.controller('taskController', function ($scope, $http, $timeout) {
         };
         $scope.formTitle = "Add New Task";
         $scope.buttonText = "Add Task";
-        $scope.successMessage = null; // Clear success message
+
     };
 
     $scope.loadData = function () {
@@ -190,28 +194,25 @@ app.controller('taskController', function ($scope, $http, $timeout) {
             console.log('Save response:', response);
             $scope.loadTasks();
 
-          
-            $scope.successMessage = isNewTask ? 'Task created successfully!' : 'Task updated successfully!';
 
-         
+            $scope.messages.success = response.data.message || (isNewTask ? 'Task created successfully!' : 'Task updated successfully!');
+            console.log('Success Message:', $scope.messages.success);
+
+
+
+            $('#taskModal').modal('hide').on('hidden.bs.modal', function () {
+                $('.modal-backdrop').remove(); // Ensures the backdrop is removed
+            });
+
+            // Keep the success message visible for 3 seconds after the modal closes
             $timeout(function () {
-                $scope.cleanupModal('#taskModal');
-            }, 1500);
+                $scope.messages.success = null;
+            }, 3000);
 
             $scope.resetForm();
         }).catch(function (error) {
             console.error('Error saving task:', error);
-            let errorMessage = 'Error saving task: ';
-            if (error.data && error.data.errors) {
-                errorMessage += Object.values(error.data.errors).join(', ');
-            } else if (error.data && error.data.title) {
-                errorMessage += error.data.title;
-            } else if (error.data) {
-                errorMessage += error.data;
-            } else {
-                errorMessage += 'Please try again.';
-            }
-            alert(errorMessage);
+            $scope.messages.error = error.data.message || 'An error occurred while saving the task.';
         });
     };
 
@@ -226,8 +227,8 @@ app.controller('taskController', function ($scope, $http, $timeout) {
     };
 
     $scope.editTask = function (task) {
-        
-        $scope.successMessage = null; 
+
+        $scope.messages.success = null;
         const startDate = new Date(task.startDate);
         const deadlineDate = new Date(task.deadlineDate);
 
@@ -259,7 +260,7 @@ app.controller('taskController', function ($scope, $http, $timeout) {
                 });
         }
     };
-    
+
     $scope.getStatusText = function (status) {
         switch (parseInt(status)) {
             case 0:
@@ -317,15 +318,15 @@ app.controller('taskController', function ($scope, $http, $timeout) {
                 $scope.selectedTask.status = $scope.newStatus;
 
                 $scope.loadTasks();
-                $scope.successMessage = 'Status Updated successfully!';
+                $scope.messages.success = response.data.message || 'Reminder sent successfully!';
 
                 setTimeout(function () {
                     $scope.cleanupModal('#statusModal');
                 }, 1500);
             })
             .catch(function (error) {
-                console.error('Status update error:', error);
-                $scope.statusUpdateError = error.data || 'Error updating task status';
+                console.error('Error sending reminder:', error);
+                $scope.messages.error = error.data.message || 'Error sending reminder';
             });
     };
 
@@ -448,4 +449,3 @@ app.controller('taskController', function ($scope, $http, $timeout) {
     $scope.resetForm();
     $scope.loadData();
 });
-

@@ -2,7 +2,7 @@
 using Enterprise.EmployeeManagement.DAL.Context;
 using Enterprise.EmployeeManagement.DAL.Models;
 using System.Collections.Generic;
-using System.Linq;  // Ensure this namespace is included
+
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using System;
@@ -14,8 +14,8 @@ public class TaskRepository : ITaskRepository
 
     public TaskRepository(AppDbContext context, ILogger<TaskRepository> logger)
     {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _context = context; 
+        _logger = logger;
     }
 
     public async Task<IEnumerable<TaskEntity>> GetAllTasksAsync()
@@ -45,13 +45,14 @@ public class TaskRepository : ITaskRepository
         return await GetTaskByIdAsync(task.TaskId);
     }
 
-    public async Task UpdateTaskAsync(TaskEntity task)
+    public async Task<bool> UpdateTaskAsync(TaskEntity task)
     {
         _logger.LogInformation("Updating task with ID {taskId} in repository", task.TaskId);
         var existingTask = await _context.Tasks.FirstOrDefaultAsync(t => t.TaskId == task.TaskId);
         if (existingTask == null)
         {
-            throw new KeyNotFoundException($"Task with ID {task.TaskId} not found");
+            _logger.LogWarning("Task with ID {taskId} not found for update", task.TaskId);
+            return false;
         }
 
         existingTask.Title = task.Title;
@@ -59,21 +60,24 @@ public class TaskRepository : ITaskRepository
         existingTask.Status = task.Status;
         existingTask.AssignedEmployeeId = task.AssignedEmployeeId;
         existingTask.ReviewerId = task.ReviewerId;
-
         await _context.SaveChangesAsync();
+        return true;
     }
 
-    public async Task DeleteTaskAsync(int id)
+    public async Task<bool> DeleteTaskAsync(int id)
     {
         _logger.LogInformation("Deleting task with ID {taskId} from repository", id);
         var task = await _context.Tasks.FindAsync(id);
         if (task == null)
         {
-            throw new KeyNotFoundException($"Task with ID {id} not found");
+            _logger.LogWarning("Task with ID {taskId} not found for deletion", id);
+            return false;
         }
+
 
         _context.Tasks.Remove(task);
         await _context.SaveChangesAsync();
+        return true;
     }
 
     public async Task<bool> TaskExistsAsync(int id)
@@ -86,16 +90,17 @@ public class TaskRepository : ITaskRepository
         return await _context.Employees.AnyAsync(e => e.Id == employeeId);
     }
 
-    public async Task UpdateTaskStatusAsync(int id, TaskStatus status)
+    public async Task<bool> UpdateTaskStatusAsync(int id, TaskStatus status)
     {
         _logger.LogInformation("Updating status for task with ID {taskId} in repository", id);
         var task = await _context.Tasks.FirstOrDefaultAsync(t => t.TaskId == id);
         if (task == null)
         {
-            throw new KeyNotFoundException($"Task with ID {id} not found");
+            _logger.LogWarning("Task with ID {taskId} not found for status update", id);
+            return false;
         }
-
         task.Status = status;
         await _context.SaveChangesAsync();
+        return true;
     }
 }

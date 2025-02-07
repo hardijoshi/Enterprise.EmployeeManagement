@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 using Enterprise.EmployeeManagement.DAL.Models;
-using Enterprise.EmployeeManagement.core.Interfaces;
 using Enterprise.EmployeeManagement.core.Utilities;
 using Enterprise.EmployeeManagement.DAL.Repositories;
 using Enterprise.EmployeeManagement.DAL.Services;

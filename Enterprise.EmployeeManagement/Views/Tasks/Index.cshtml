@@ -4,6 +4,19 @@
 
 
 <div ng-app="taskApp" ng-controller="taskController" class="task-dashboard">
+    <div class="messages-container mb-3">
+        <div class="alert alert-success alert-dismissible fade show" role="alert" ng-if="messages.success">
+            {{messages.success}}
+            <button type="button" class="close" ng-click="clearMessages()">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" ng-if="messages.error">
+            {{messages.error}}
+            <button type="button" class="close" ng-click="clearMessages()">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
     <!-- Header Section -->
     <div class="row mb-4 align-items-center">
         <div class="col">
@@ -58,7 +71,7 @@
                         </div>
                     </td>
                     <td>{{task.reviewerName}}</td>
-                    
+
                     <td>
                         <div class="progress" data-toggle="tooltip"
                              title="Shows percentage of allocated time that has elapsed">
@@ -73,7 +86,7 @@
                             </div>
                         </div>
                     </td>
-                    
+
                     <td>
                         <span ng-class="{
                             'text-danger': getTimeRemaining(task) === 'Overdue',
@@ -83,7 +96,7 @@
                             {{getTimeRemaining(task)}}
                         </span>
                     </td>
-                    
+
                     <td>{{task.startDate | customDate}}</td>
                     <td>{{task.deadlineDate | customDate}}</td>
                     <td class="d-flex gap-2">
@@ -136,10 +149,6 @@
                 </div>
                 <div class="modal-body">
                     <!-- Success Message -->
-                    <div class="alert alert-success" ng-show="successMessage">
-                        {{ successMessage }}
-                    </div>
-
 
                     <form name="taskForm" novalidate>
                         <input type="hidden" ng-model="task.taskId" />
@@ -206,16 +215,14 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    
+
                     <h5 class="modal-title" id="statusModalLabel">Update Task Status</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close" ng-click="cleanupModal('#statusModal')">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div ng-if="statusUpdateError" class="alert alert-danger">
-                        <strong>{{statusUpdateError}}</strong>
-                    </div>
+                        
                     <form name="statusForm" novalidate>
                         <div class="form-group">
                             <label>Current Status: </label>
@@ -250,7 +257,7 @@
         </div>
     </div>
 
-   
+
 </div>
 
 @section Scripts {

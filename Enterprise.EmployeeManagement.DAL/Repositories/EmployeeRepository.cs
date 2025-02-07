@@ -21,54 +21,33 @@ namespace Enterprise.EmployeeManagement.DAL.Repositories
 
         public async Task<List<Employee>> GetAllEmployeesAsync()
         {
-            try
-            {
-                return await _context.Employees.ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                // Log exception here (e.g., using ILogger)
-                throw new Exception("Error fetching employees.", ex);
-            }
+            return await _context.Employees.ToListAsync();
         }
+        
 
+
+    
         public async Task<Employee> GetEmployeeByIdAsync(int id)
         {
-            try
-            {
-                return await _context.Employees.FindAsync(id);
-            }
-            catch (Exception ex)
-            {
-                // Log exception here
-                throw new Exception($"Error fetching employee with ID {id}.", ex);
-            }
+            return await _context.Employees.FindAsync(id);
         }
 
         public async Task CreateEmployeeAsync(Employee employee)
         {
-            try
-            {
-                _context.Employees.Add(employee);
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                // Log exception here
-                throw new Exception("Error creating employee.", ex);
-            }
+            _context.Employees.Add(employee);
+            await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateEmployeeAsync(Employee employee)
+        public async Task<bool> UpdateEmployeeAsync(Employee employee)
         {
             var existingEmployee = await _context.Employees.FindAsync(employee.Id);
             if (existingEmployee == null)
             {
-                throw new Exception($"Employee with ID {employee.Id} not found.");
+                return false;
             }
 
             _context.Entry(existingEmployee).CurrentValues.SetValues(employee);
-            await _context.SaveChangesAsync();
+            return await _context.SaveChangesAsync() > 0;
         }
 
 

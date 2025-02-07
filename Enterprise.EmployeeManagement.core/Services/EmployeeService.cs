@@ -7,6 +7,8 @@ using Enterprise.EmployeeManagement.core.Interfaces;
 using System.Threading.Tasks;
 using Enterprise.EmployeeManagement.DAL.DTO;
 using System.Linq;
+using Enterprise.EmployeeManagement.core.Common.Responses;
+
 
 namespace Enterprise.EmployeeManagement.core.Services
 {
@@ -33,32 +35,36 @@ namespace Enterprise.EmployeeManagement.core.Services
             return _employeeMapper.MapToDTO(employee);
         }
 
-        public async Task CreateEmployeeAsync(EmployeeDTO employeeDto)
+        public async Task<ResponseMessage<bool>> CreateEmployeeAsync(EmployeeDTO employeeDto)
         {
             if (await _employeeRepository.IsEmailExistsAsync(employeeDto.Email))
             {
-                throw new Exception("An employee with the same email already exists.");
+                return new ResponseMessage<bool> { Success = false, Message = "An employee with the same email already exists." };
             }
 
             var employee = _employeeMapper.MapToEntity(employeeDto);
             await _employeeRepository.CreateEmployeeAsync(employee);
+            return new ResponseMessage<bool> { Success = true, Data = true };
         }
 
-        public async Task UpdateEmployeeAsync(int id, EmployeeDTO employeeDto)
+        public async Task<ResponseMessage<bool>> UpdateEmployeeAsync(int id, EmployeeDTO employeeDto)
         {
             var existingEmployee = await _employeeRepository.GetEmployeeByIdAsync(id);
             if (existingEmployee == null)
             {
-                throw new Exception($"Employee with ID {id} not found.");
+                
+                return new ResponseMessage<bool> { Success = false, Message = "Employee with ID {id} not found." };
             }
+
 
             if (existingEmployee.Email != employeeDto.Email && await _employeeRepository.IsEmailExistsAsync(employeeDto.Email))
             {
-                throw new Exception("An employee with the same email already exists.");
+                return new ResponseMessage<bool> { Success = false, Message = "An employee with the same email already exists." };
             }
 
             existingEmployee = _employeeMapper.MapToEntity(employeeDto);
             await _employeeRepository.UpdateEmployeeAsync(existingEmployee);
+            return new ResponseMessage<bool> { Success = true, Data = true };
         }
 
         public async Task<bool> DeleteEmployeeAsync(int id)

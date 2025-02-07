@@ -12,7 +12,7 @@ namespace Enterprise.EmployeeManagement.DAL.Repositories
         Task<List<Employee>> GetAllEmployeesAsync();
         Task<Employee> GetEmployeeByIdAsync(int id);
         Task CreateEmployeeAsync(Employee employee);
-        Task UpdateEmployeeAsync(Employee employee);
+        Task<bool> UpdateEmployeeAsync(Employee employee);
         Task<bool> DeleteEmployeeAsync(int id);
         Task<bool> IsEmailExistsAsync(string email);
         Task<string> GetEmployeeNameById(int employeeId);

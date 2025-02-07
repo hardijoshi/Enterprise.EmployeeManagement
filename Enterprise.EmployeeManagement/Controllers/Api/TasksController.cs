@@ -10,6 +10,7 @@ using System.Linq;
 using Enterprise.EmployeeManagement.core.MailService;
 using System.Threading.Tasks;
 using Enterprise.EmployeeManagement.core.Interfaces;
+using Enterprise.EmployeeManagement.core.Common.Responses;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -27,15 +28,25 @@ public class TasksController : ControllerBase
         _employeeService = employeeService;
         _emailService = emailService;
         _logger.LogInformation("TasksController Started");
-    }
 
+    }
     [HttpGet]
     public async Task<IActionResult> GetTasks()
     {
         _logger.LogInformation("Fetching all tasks...");
         try
         {
-            var tasks = await _taskService.GetAllAsync();
+            var response = await _taskService.GetAllAsync();
+
+            // Check if response is null or unsuccessful
+            if (response == null || !response.Success)
+            {
+                _logger.LogInformation("Failed to retrieve tasks or response is null");
+                return StatusCode(500, "Failed to retrieve tasks");
+            }
+
+            var tasks = response.Data; // Extract the IEnumerable<TaskDTO>
+
             if (tasks == null || !tasks.Any())
             {
                 _logger.LogInformation("No tasks found");
@@ -51,6 +62,7 @@ public class TasksController : ControllerBase
             return StatusCode(500, "Internal server error occurred while retrieving tasks");
         }
     }
+
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetTask(int id)
@@ -84,32 +96,31 @@ public class TasksController : ControllerBase
         if (!ModelState.IsValid)
         {
             _logger.LogWarning("Invalid model state");
-            return BadRequest(ModelState);
+            return BadRequest(ResponseMessage<TaskDTO>.FailureResult("Invalid model state"));
         }
 
         try
         {
-            // Convert incoming dates to local time
             taskDto.StartDate = DateTime.Parse(taskDto.StartDate.ToString("yyyy-MM-ddTHH:mm:ss"));
             taskDto.DeadlineDate = DateTime.Parse(taskDto.DeadlineDate.ToString("yyyy-MM-ddTHH:mm:ss"));
+            taskDto.ValidateDates();
 
-            // Validate dates
-            try
+            var response = await _taskService.CreateAsync(taskDto);
+            if (!response.Success)
             {
-                taskDto.ValidateDates();
-            }
-            catch (ValidationException ex)
-            {
-                return BadRequest(new { Message = ex.Message });
+                return BadRequest(response);
             }
 
-            var createdTask = await _taskService.CreateAsync(taskDto);
-            return CreatedAtAction(nameof(GetTask), new { id = createdTask.TaskId }, createdTask);
+            return CreatedAtAction(nameof(GetTask), new { id = response.Data.TaskId }, response);
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(ResponseMessage<TaskDTO>.FailureResult(ex.Message));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error adding task");
-            return StatusCode(500, "Internal server error occurred while creating the task");
+            return StatusCode(500, ResponseMessage<TaskDTO>.FailureResult("Internal server error occurred while creating the task"));
         }
     }
 
@@ -121,63 +132,56 @@ public class TasksController : ControllerBase
         if (id != taskDto.TaskId)
         {
             _logger.LogWarning("Task ID mismatch");
-            return BadRequest("ID mismatch");
+            return BadRequest(ResponseMessage<bool>.FailureResult("ID mismatch"));
         }
 
         try
         {
-            // Validate dates
-            try
+            taskDto.ValidateDates();
+            var response = await _taskService.UpdateAsync(taskDto);
+
+            if (!response.Success)
             {
-                taskDto.ValidateDates();
-            }
-            catch (ValidationException ex)
-            {
-                return BadRequest(new { Message = ex.Message });
+                if (response.Message.Contains("not found"))
+                {
+                    return NotFound(response);
+                }
+                return BadRequest(response);
             }
 
-            await _taskService.UpdateAsync(taskDto);
             _logger.LogInformation("Task with ID {taskId} successfully updated", id);
             return NoContent();
         }
         catch (ValidationException ex)
         {
-            _logger.LogWarning("Validation error: {Message}", ex.Message);
-            return BadRequest(new { Message = ex.Message });
-        }
-        catch (KeyNotFoundException)
-        {
-            _logger.LogWarning("Task with ID {taskId} not found", id);
-            return NotFound();
+            return BadRequest(ResponseMessage<bool>.FailureResult(ex.Message));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating task with ID {taskId}", id);
-            return StatusCode(500, "Internal server error occurred while updating the task");
+            return StatusCode(500, ResponseMessage<bool>.FailureResult("Internal server error occurred while updating the task"));
         }
     }
+
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Manager, Admin")]
     public async Task<IActionResult> DeleteTask(int id)
     {
         _logger.LogInformation("Deleting task with ID {taskId}...", id);
-        try
+        var response = await _taskService.DeleteAsync(id);
+
+        if (!response.Success)
         {
-            await _taskService.DeleteAsync(id);
-            _logger.LogInformation("Task with ID {taskId} successfully deleted", id);
-            return NoContent();
+            if (response.Message.Contains("not found"))
+            {
+                return NotFound(response);
+            }
+            return StatusCode(500, response);
         }
-        catch (KeyNotFoundException)
-        {
-            _logger.LogWarning("Task with ID {taskId} not found", id);
-            return NotFound();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting task with ID {taskId}", id);
-            return StatusCode(500, "Internal server error occurred while deleting the task");
-        }
+
+        _logger.LogInformation("Task with ID {taskId} successfully deleted", id);
+        return NoContent();
     }
 
     [HttpPatch("{id}/status")]
@@ -187,23 +191,27 @@ public class TasksController : ControllerBase
         _logger.LogInformation("Updating status for task with ID {taskId}...", id);
         try
         {
-            var existingTask = await _taskService.GetByIdAsync(id);
-            if (existingTask == null)
+            var taskResponse = await _taskService.GetByIdAsync(id);
+            if (!taskResponse.Success)
             {
-                _logger.LogWarning("Task with ID {taskId} not found", id);
-                return NotFound();
+                return NotFound(taskResponse);
             }
 
+            var existingTask = taskResponse.Data;
             if (!IsValidStatusTransition(existingTask.Status, status))
             {
-                _logger.LogWarning("Invalid status transition from {currentStatus} to {newStatus}",
-                    existingTask.Status, status);
-                return BadRequest($"Invalid status transition from {existingTask.Status} to {status}");
+                var errorResponse = ResponseMessage<bool>.FailureResult(
+                    $"Invalid status transition from {existingTask.Status} to {status}");
+                return BadRequest(errorResponse);
             }
 
-            // Use the new UpdateStatus method
             existingTask.UpdateStatus(status);
-            await _taskService.UpdateAsync(existingTask);
+            var updateResponse = await _taskService.UpdateAsync(existingTask);
+
+            if (!updateResponse.Success)
+            {
+                return StatusCode(500, updateResponse);
+            }
 
             _logger.LogInformation("Task status successfully updated to {status}", status);
             return NoContent();
@@ -211,7 +219,7 @@ public class TasksController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating status for task with ID {taskId}", id);
-            return StatusCode(500, "Internal server error occurred while updating the task status");
+            return StatusCode(500, ResponseMessage<bool>.FailureResult("Internal server error occurred while updating the task status"));
         }
     }
 
@@ -238,25 +246,26 @@ public class TasksController : ControllerBase
     {
         try
         {
-            var task = await _taskService.GetByIdAsync(id);
-            if (task == null)
+            var taskResponse = await _taskService.GetByIdAsync(id);
+            if (!taskResponse.Success)
             {
-                return NotFound();
+                return NotFound(taskResponse);
             }
 
-            // More flexible overdue check with small buffer
+            var task = taskResponse.Data;
             var now = DateTime.UtcNow;
             var isOverdue = task.DeadlineDate.AddMinutes(-5) < now;
 
             if (!isOverdue)
             {
-                return BadRequest($"Task is not overdue. Deadline: {task.DeadlineDate}, Current Time: {now}");
+                return BadRequest(ResponseMessage<bool>.FailureResult(
+                    $"Task is not overdue. Deadline: {task.DeadlineDate}, Current Time: {now}"));
             }
 
             var employee = await _employeeService.GetEmployeeByIdAsync(task.AssignedEmployeeId);
             if (employee == null)
             {
-                return NotFound("Assigned employee not found");
+                return NotFound(ResponseMessage<bool>.FailureResult("Assigned employee not found"));
             }
 
             await _emailService.SendReminderEmailAsync(
@@ -265,12 +274,12 @@ public class TasksController : ControllerBase
                 task.DeadlineDate
             );
 
-            return Ok();
+            return Ok(ResponseMessage<bool>.SuccessResult(true, "Reminder sent successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending reminder for task {taskId}", id);
-            return StatusCode(500, "Failed to send reminder");
+            return StatusCode(500, ResponseMessage<bool>.FailureResult("Failed to send reminder"));
         }
     }
 
